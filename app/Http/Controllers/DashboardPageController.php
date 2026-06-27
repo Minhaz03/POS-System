@@ -231,35 +231,6 @@ class DashboardPageController extends Controller
     }
 
     /**
-     * Display Production.
-     */
-    public function production(): View
-    {
-        $batches = [
-            ['id' => 'PRD-1029', 'recipe' => 'Sourdough Bread', 'qty' => 40, 'status' => 'Completed', 'date' => '2026-06-24 06:00 AM'],
-            ['id' => 'PRD-1030', 'recipe' => 'Butter Croissant', 'qty' => 60, 'status' => 'Completed', 'date' => '2026-06-24 07:30 AM'],
-            ['id' => 'PRD-1031', 'recipe' => 'Chocolate Muffin', 'qty' => 24, 'status' => 'In Progress', 'date' => '2026-06-24 11:30 AM'],
-            ['id' => 'PRD-1032', 'recipe' => 'Sourdough Bread (Batch B)', 'qty' => 30, 'status' => 'Scheduled', 'date' => '2026-06-24 02:00 PM'],
-        ];
-
-        return view('dashboard.production', compact('batches'));
-    }
-
-    /**
-     * Display Custom Orders.
-     */
-    public function customOrders(): View
-    {
-        $orders = [
-            ['id' => 'ORD-501', 'customer' => 'Rubaiya Islam', 'details' => '2-tier Chocolate Fudge Wedding Cake with white frosting and roses', 'delivery_date' => '2026-06-28', 'price' => 5500, 'advance' => 2000, 'status' => 'Confirmed'],
-            ['id' => 'ORD-502', 'customer' => 'Tahmid Hasan', 'details' => 'Custom Spider-Man Birthday Cake (Vanilla, 2kg)', 'delivery_date' => '2026-06-25', 'price' => 2500, 'advance' => 1000, 'status' => 'In Progress'],
-            ['id' => 'ORD-503', 'customer' => 'Nusrat Jahan', 'details' => 'Red Velvet anniversary cake (Heart-shaped, 1.5kg)', 'delivery_date' => '2026-06-30', 'price' => 2000, 'advance' => 0, 'status' => 'Pending Review'],
-        ];
-
-        return view('dashboard.custom-orders', compact('orders'));
-    }
-
-    /**
      * Display Analytics.
      */
     public function analytics(): View

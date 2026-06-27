@@ -118,11 +118,23 @@
                 </div>
             </div>
 
-            {{-- Notes --}}
-            @if($purchase->notes)
+            {{-- Notes & Attachment --}}
+            @if($purchase->notes || $purchase->attachment)
                 <div class="card">
-                    <div class="card-header"><span class="card-title"><i class="bi bi-chat-left-text"></i> Purchase Notes</span></div>
-                    <div class="card-body" style="color:#475569;line-height:1.7;white-space:pre-wrap;">{{ $purchase->notes }}</div>
+                    <div class="card-header"><span class="card-title"><i class="bi bi-chat-left-text"></i> Notes & Attachments</span></div>
+                    <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+                        @if($purchase->notes)
+                            <div style="color:#475569;line-height:1.7;white-space:pre-wrap;">{{ $purchase->notes }}</div>
+                        @endif
+                        @if($purchase->attachment)
+                            <div style="padding-top:{{ $purchase->notes ? '12px' : '0' }};border-top:{{ $purchase->notes ? '1px solid #f1f5f9' : 'none' }};">
+                                <span style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:6px;">Attached Document:</span>
+                                <a href="{{ asset('storage/' . $purchase->attachment) }}" target="_blank" class="btn btn-outline btn-sm" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+                                    <i class="bi bi-paperclip"></i> View / Download Attachment
+                                </a>
+                            </div>
+                        @endif
+                    </div>
                 </div>
             @endif
         </div>

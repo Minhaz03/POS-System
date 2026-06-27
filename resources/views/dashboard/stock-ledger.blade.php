@@ -1,4 +1,9 @@
 <x-layouts.admin title="Stock Ledger">
+    <!-- Select2 Assets & Custom Styling -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
     <style>
         [x-cloak] {
             display: none !important;
@@ -26,9 +31,53 @@
             justify-content: center;
             z-index: 9999;
         }
+
+        .select2-container--default .select2-selection--single {
+            height: 44px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            padding: 6px 12px;
+            font-size: 14px;
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #1e293b;
+            line-height: 30px;
+            padding-left: 2px;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 42px;
+            right: 10px;
+        }
+        .select2-container--default.select2-container--focus .select2-selection--single,
+        .select2-container--default .select2-selection--single:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+            outline: none;
+        }
+        .select2-dropdown {
+            border-color: #cbd5e1;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+            z-index: 10000;
+        }
+        .select2-results__option {
+            font-size: 13.5px;
+            padding: 10px 14px;
+        }
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #6366f1;
+        }
+        .select2-container {
+            width: 100% !important;
+        }
     </style>
 
-    <div x-data="{ showAdjustModal: false, selectedType: 'Adjustment (+)', auditDirection: 'add' }" style="display:contents;">
+    <div x-data="{ showAdjustModal: false, selectedType: 'Adjustment (+)', auditDirection: 'add' }" 
+         x-init="$watch('showAdjustModal', value => { if(value) { setTimeout(() => { $('#product_id').select2({ placeholder: '-- Choose a Product --', allowClear: true, width: '100%', dropdownParent: $('#product_id').parent() }); }, 50); } })" 
+         style="display:contents;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
             <div>
                 <h2 style="font-size:22px;font-weight:800;color:#0f172a;margin:0;">Stock Ledger</h2>
@@ -146,8 +195,8 @@
                         <div class="form-group" style="margin-bottom:20px;">
                             <label class="form-label" for="product_id" style="font-weight:600;margin-bottom:8px;">Select
                                 Product <span style="color:var(--danger)">*</span></label>
-                            <select name="product_id" id="product_id" class="form-control" required
-                                style="height:44px;border-radius:10px;cursor:pointer;">
+                            <select name="product_id" id="product_id" class="form-control select2" required
+                                style="height:44px;border-radius:10px;cursor:pointer;width:100%;">
                                 <option value="">-- Choose a Product --</option>
                                 @foreach ($products as $p)
                                     <option value="{{ $p->id }}">{{ $p->name }} (SKU:

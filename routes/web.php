@@ -13,6 +13,8 @@ use App\Http\Controllers\BrandController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\RecipeController;
+use App\Http\Controllers\CustomOrderController;
+use App\Http\Controllers\ProductionBatchController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -137,8 +139,31 @@ Route::middleware(['auth', 'verified'])->prefix('dashboard')->name('dashboard.')
         'update'  => 'recipes.update',
         'destroy' => 'recipes.destroy',
     ]);
-    Route::get('/Production', [DashboardPageController::class, 'production'])->name('production');
-    Route::get('/Custom-Orders', [DashboardPageController::class, 'customOrders'])->name('custom-orders');
+    Route::patch('Production-Batches/{production_batch}/complete', [ProductionBatchController::class, 'complete'])->name('production-batches.complete');
+    Route::patch('Production-Batches/{production_batch}/cancel', [ProductionBatchController::class, 'cancel'])->name('production-batches.cancel');
+    Route::delete('Production-Batches/{production_batch}', [ProductionBatchController::class, 'destroy'])->name('production.destroy');
+    Route::resource('Production-Batches', ProductionBatchController::class)->parameters([
+        'Production-Batches' => 'production_batch'
+    ])->names([
+        'index' => 'production',
+        'create' => 'production.create',
+        'store' => 'production.store',
+        'show' => 'production.show',
+        'edit' => 'production.edit',
+        'update' => 'production.update',
+        'destroy' => 'production-batches.destroy',
+    ]);
+    Route::resource('Custom-Orders', CustomOrderController::class)->parameters([
+        'Custom-Orders' => 'custom_order'
+    ])->names([
+        'index' => 'custom-orders',
+        'create' => 'custom-orders.create',
+        'store' => 'custom-orders.store',
+        'show' => 'custom-orders.show',
+        'edit' => 'custom-orders.edit',
+        'update' => 'custom-orders.update',
+        'destroy' => 'custom-orders.destroy',
+    ]);
     Route::get('/Analytics', [DashboardPageController::class, 'analytics'])->name('analytics');
 });
 

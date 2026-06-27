@@ -131,7 +131,7 @@
                         if (existing.qty < item.stock) {
                             existing.qty++;
                         } else {
-                            alert("Cannot exceed available stock of " + item.stock + " items.");
+                            Swal.fire('Stock Limit Reached', 'Cannot exceed available stock of ' + item.stock + ' items.', 'warning');
                         }
                     } else {
                         if (item.stock > 0) {
@@ -142,7 +142,7 @@
                                 qty: 1
                             });
                         } else {
-                            alert("This product is currently out of stock.");
+                            Swal.fire('Out of Stock', 'This product is currently out of stock.', 'error');
                         }
                     }
                 },
@@ -156,7 +156,7 @@
                             this.cart = this.cart.filter(c => c.id !== id);
                         } else if (item.qty > catalogItem.stock) {
                             item.qty = catalogItem.stock;
-                            alert("Cannot exceed available stock.");
+                            Swal.fire('Stock Limit Reached', 'Cannot exceed available stock.', 'warning');
                         }
                     }
                 },
@@ -180,7 +180,14 @@
                 },
 
                 checkout() {
-                    alert("Order placed successfully! Total bill: ৳" + this.total() + "\nReceipt printed.");
+                    const totalBill = this.total();
+                    Swal.fire({
+                        title: 'Order Placed Successfully!',
+                        html: `<div style="font-size: 15px; margin-top: 8px;">Total Bill: <strong style="color: #16a34a; font-size: 18px;">৳${totalBill}</strong></div><div style="font-size: 13px; color: #64748b; margin-top: 6px;"><i class="bi bi-printer"></i> Receipt printed.</div>`,
+                        icon: 'success',
+                        confirmButtonColor: '#6366f1',
+                        confirmButtonText: 'OK'
+                    });
                     this.clearCart();
                 }
             }
