@@ -171,11 +171,13 @@
                                 <!-- edit btn  -->
                                 <a href="{{ route('dashboard.products.edit', $product) }}" style="color:#6366f1;" title="Edit Product"><i class="bi bi-pencil-square"></i></a>
                                 <!-- delete btn  -->
-                                <form method="POST" action="{{ route('dashboard.products.destroy', $product) }}" onsubmit="return confirm('Are you sure you want to delete this product?')" style="margin:0;display:inline;">
+                                <form id="delete-product-{{ $product->id }}" method="POST" action="{{ route('dashboard.products.destroy', $product) }}" style="display:none;">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" style="background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer;padding:0;"><i class="bi bi-trash"></i></button>
                                 </form>
+                                <button type="button" onclick="confirmDeleteProduct({{ $product->id }}, '{{ addslashes($product->name) }}')" style="background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer;padding:0;" title="Delete Product">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -197,4 +199,22 @@
         {{ $products->links() }}
     </div>
 
+    <script>
+        function confirmDeleteProduct(id, name) {
+            Swal.fire({
+                title: 'Delete Product?',
+                html: `Are you sure you want to delete product <strong>"${name}"</strong>? This action cannot be undone.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Yes, delete it!',
+                background: '#ffffff',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('delete-product-' + id).submit();
+                }
+            });
+        }
+    </script>
 </x-layouts.admin>

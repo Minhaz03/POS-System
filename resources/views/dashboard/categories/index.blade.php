@@ -65,11 +65,13 @@
                     <span style="font-size:13px;font-weight:700;color:#0f172a;"><i class="bi bi-box-seam" style="color:var(--primary);"></i> {{ $category->products_count }} Products</span>
                     <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
                         <a href="{{ route('dashboard.categories.edit', $category) }}" style="color:#6366f1;font-size:16px;" title="Edit"><i class="bi bi-pencil-square"></i></a>
-                        <form method="POST" action="{{ route('dashboard.categories.destroy', $category) }}" onsubmit="return confirm('Are you sure you want to delete this category?')" style="margin:0;display:inline;">
+                        <form id="delete-category-{{ $category->id }}" method="POST" action="{{ route('dashboard.categories.destroy', $category) }}" style="display:none;">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" style="background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer;padding:0;"><i class="bi bi-trash"></i></button>
                         </form>
+                        <button type="button" onclick="confirmDeleteCategory({{ $category->id }}, '{{ addslashes($category->name) }}')" style="background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer;padding:0;" title="Delete Category">
+                            <i class="bi bi-trash"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -87,4 +89,22 @@
         {{ $categories->links() }}
     </div>
 
+    <script>
+        function confirmDeleteCategory(id, name) {
+            Swal.fire({
+                title: 'Delete Category?',
+                html: `Are you sure you want to delete category <strong>"${name}"</strong>? This action cannot be undone.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Yes, delete it!',
+                background: '#ffffff',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('delete-category-' + id).submit();
+                }
+            });
+        }
+    </script>
 </x-layouts.admin>
