@@ -1,13 +1,71 @@
 <x-layouts.admin title="Custom Bakery Orders">
 
-    <div style="display:flex;justify-content:between;align-items:center;margin-bottom:24px;">
+    <div x-data="{ showModal: false }" style="display:flex;justify-content:between;align-items:center;margin-bottom:24px;">
         <div>
             <h2 style="font-size:22px;font-weight:800;color:#0f172a;margin:0;">Custom Orders</h2>
             <p style="font-size:13.5px;color:#64748b;margin:4px 0 0 0;">Manage custom cake requests, delivery dates, client specifications, and down payments.</p>
         </div>
-        <button class="btn btn-primary" style="margin-left:auto;">
+        <button class="btn btn-primary" @click="showModal = true" style="margin-left:auto;">
             <i class="bi bi-calendar-plus"></i> New Custom Order
         </button>
+
+        <!-- Create Custom Order Modal -->
+        <div x-show="showModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9999;">
+            <div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;padding:20px;">
+                <div class="card" @click.outside="showModal = false" style="width:100%;max-width:600px;box-shadow:0 10px 25px rgba(0,0,0,0.2);max-height:90vh;display:flex;flex-direction:column;">
+                    <div class="card-header" style="justify-content:space-between;padding:16px 20px;flex-shrink:0;">
+                        <span style="font-weight:700;font-size:16px;">New Custom Order</span>
+                        <button @click="showModal = false" style="background:none;border:none;cursor:pointer;font-size:20px;color:#94a3b8;"><i class="bi bi-x"></i></button>
+                    </div>
+                    <form action="{{ route('dashboard.custom-orders.store') }}" method="POST" style="display:flex;flex-direction:column;overflow:hidden;">
+                        @csrf
+                        <div class="card-body" style="padding:20px;overflow-y:auto;">
+                            <div class="form-group">
+                                <label class="form-label">Customer <span style="color:var(--danger)">*</span></label>
+                                <select name="customer_id" class="form-control" onchange="document.getElementById('customer_name_input').style.display = this.value ? 'none' : 'block'">
+                                    <option value="">Walk-in / Enter Name Manually...</option>
+                                    @foreach($customers as $customer)
+                                        <option value="{{ $customer->id }}">{{ $customer->name }} ({{ $customer->phone ?? 'No phone' }})</option>
+                                    @endforeach
+                                </select>
+                                <input type="text" id="customer_name_input" name="customer_name" class="form-control" placeholder="Customer Name" style="margin-top:8px;">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Specifications / Details <span style="color:var(--danger)">*</span></label>
+                                <textarea name="details" class="form-control" rows="4" placeholder="Cake flavor, writing, theme, dietary requirements..." required></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Delivery Date <span style="color:var(--danger)">*</span></label>
+                                <input type="date" name="delivery_date" class="form-control" required>
+                            </div>
+
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label class="form-label">Total Cost <span style="color:var(--danger)">*</span></label>
+                                    <div style="position:relative;">
+                                        <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#64748b;">৳</span>
+                                        <input type="number" step="0.01" name="total_price" class="form-control" style="padding-left:28px;" required>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label class="form-label">Advance Payment <span style="color:var(--danger)">*</span></label>
+                                    <div style="position:relative;">
+                                        <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#64748b;">৳</span>
+                                        <input type="number" step="0.01" name="advance_payment" class="form-control" style="padding-left:28px;" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="padding:16px 20px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:10px;flex-shrink:0;">
+                            <button type="button" class="btn btn-outline" @click="showModal = false">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Order</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Custom Orders Table -->
@@ -47,8 +105,15 @@
                         </td>
                         <td style="padding:14px 20px;font-weight:600;color:#4f46e5;"><i class="bi bi-calendar-event"></i> {{ $order['delivery_date'] }}</td>
                         <td style="padding:14px 20px;text-align:center;font-size:16px;">
-                            <a href="#" style="color:#6366f1;margin-right:12px;" title="Print Slip"><i class="bi bi-printer"></i></a>
-                            <a href="#" style="color:#ef4444;" title="Cancel Order"><i class="bi bi-trash"></i></a>
+                            <a href="{{ route('dashboard.custom-orders.print', $order['real_id']) }}" target="_blank" style="color:#6366f1;margin-right:12px;" title="Print Slip"><i class="bi bi-printer"></i></a>
+                            
+                            @if($order['status'] !== 'Cancelled')
+                                <form id="form-cancel-{{ $order['real_id'] }}" action="{{ route('dashboard.custom-orders.cancel', $order['real_id']) }}" method="POST" style="display:inline;">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="button" onclick="confirmCancel({{ $order['real_id'] }}, '{{ $order['id'] }}')" style="background:none;border:none;color:#ef4444;cursor:pointer;" title="Cancel Order"><i class="bi bi-trash"></i></button>
+                                </form>
+                            @endif
                         </td>
                     </tr>
                     @endforeach
@@ -56,5 +121,23 @@
             </table>
         </div>
     </div>
+
+    <script>
+        function confirmCancel(realId, orderId) {
+            Swal.fire({
+                title: 'Cancel Order?',
+                html: `<p style="color:#475569;font-size:14px;">Are you sure you want to cancel Custom Order <strong style="font-family:monospace;">${orderId}</strong>?</p>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Yes, Cancel it!',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById(`form-cancel-${realId}`).submit();
+                }
+            });
+        }
+    </script>
 
 </x-layouts.admin>

@@ -32,7 +32,7 @@ class CustomerController extends Controller
         return view('dashboard.customers.create');
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -40,14 +40,24 @@ class CustomerController extends Controller
             'email' => 'nullable|email|max:255',
             'address' => 'nullable|string',
             'date_of_birth' => 'nullable|date',
-            'loyalty_points' => 'required|integer|min:0',
-            'total_spent' => 'required|numeric|min:0',
+            'loyalty_points' => 'nullable|integer|min:0',
+            'total_spent' => 'nullable|numeric|min:0',
             'is_active' => 'nullable|boolean',
         ]);
 
-        $validated['is_active'] = $request->has('is_active');
+        $validated['loyalty_points'] = $validated['loyalty_points'] ?? 0;
+        $validated['total_spent'] = $validated['total_spent'] ?? 0;
+        $validated['is_active'] = $request->has('is_active') || $request->wantsJson();
 
-        Customer::create($validated);
+        $customer = Customer::create($validated);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'customer' => $customer,
+                'message' => 'Customer registered successfully!'
+            ]);
+        }
 
         return redirect()->route('dashboard.customers')->with('success', 'Customer registered successfully!');
     }

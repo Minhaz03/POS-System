@@ -1,7 +1,33 @@
 <x-layouts.admin title="POS Terminal">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <style>
+        .select2-container .select2-selection--single {
+            height: 38px !important;
+            border: 1px solid #d1d5db !important;
+            border-radius: 8px !important;
+            display: flex;
+            align-items: center;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px !important;
+            top: 1px !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #1e293b !important;
+            font-size: 14px;
+            padding-left: 13px !important;
+        }
+    </style>
 
     <!-- POS Interface with AlpineJS -->
-    <div x-data="posApp()" style="display:grid;grid-template-columns:1fr 380px;gap:20px;height:calc(100vh - 120px);">
+    <div x-data="posApp()">
+        <div style="display:grid;grid-template-columns:1fr 450px;gap:20px;height:calc(100vh - 120px);">
 
         <!-- Left Column: Products Grid -->
         <div style="display:flex;flex-direction:column;gap:16px;height:100%;min-height:0;">
@@ -45,9 +71,37 @@
 
         <!-- Right Column: Cart Panel -->
         <div class="card" style="display:flex;flex-direction:column;height:100%;min-height:0;background:#fff;border-radius:12px;">
-            <div class="card-header" style="display:flex;justify-content:between;align-items:center;flex-shrink:0;">
+            <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
                 <span class="card-title"><i class="bi bi-cart3" style="color:var(--primary);"></i> Current Cart</span>
                 <button class="btn btn-outline btn-sm" @click="clearCart()" style="margin-left:auto;padding:4px 8px;font-size:11px;border-color:#fee2e2;color:#b91c1c;">Clear</button>
+            </div>
+
+            <!-- Customer & Date Selection -->
+            <div style="padding:16px;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;gap:12px;">
+                <div style="flex:1;display:flex;gap:6px;min-width:0;">
+                    <div style="flex:1; min-width:0;" x-init="
+                        $nextTick(() => {
+                            $($refs.customerSelect).select2({
+                                width: '100%'
+                            }).on('select2:select', (e) => {
+                                customerId = e.params.data.id;
+                            }).on('select2:unselect', (e) => {
+                                customerId = '';
+                            });
+                        })
+                    ">
+                        <select x-ref="customerSelect" class="form-control">
+                            <option value="">Walk-in Customer</option>
+                            @foreach($customers as $customer)
+                                <option value="{{ $customer->id }}">{{ $customer->name }} ({{ $customer->phone ?? 'No phone' }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <button class="btn btn-outline" style="padding:0 12px;height:38px;border-radius:8px;flex-shrink:0;" @click="showCustomerModal = true" title="Add Customer">
+                        <i class="bi bi-person-plus"></i>
+                    </button>
+                </div>
+                <input type="text" x-ref="datePicker" x-model="saleDate" class="form-control" style="width:130px;height:38px;background:#fff;flex-shrink:0;" placeholder="Date">
             </div>
 
             <!-- Cart Items List -->
@@ -100,12 +154,42 @@
                     <span style="margin-left:auto;color:var(--primary);">৳<span x-text="total()"></span></span>
                 </div>
 
-                <button class="btn btn-primary" @click="checkout()" :disabled="cart.length === 0" style="width:100%;margin-top:12px;justify-content:center;height:44px;font-size:14px;">
-                    <i class="bi bi-wallet2"></i> Pay & Print Receipt
+                <button class="btn btn-primary" @click="checkout()" :disabled="cart.length === 0 || processing" style="width:100%;margin-top:12px;justify-content:center;height:44px;font-size:14px;">
+                    <i class="bi bi-wallet2"></i> <span x-text="processing ? 'Processing...' : 'Pay & Print Receipt'"></span>
                 </button>
             </div>
         </div>
 
+    </div>
+
+    <!-- Add Customer Modal Overlay -->
+    <div x-show="showCustomerModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9999;">
+        <div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;padding:20px;">
+            <div class="card" @click.outside="showCustomerModal = false" style="width:100%;max-width:400px;box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+            <div class="card-header" style="justify-content:space-between;padding:16px 20px;">
+                <span style="font-weight:700;font-size:16px;">New Customer</span>
+                <button @click="showCustomerModal = false" style="background:none;border:none;cursor:pointer;font-size:20px;color:#94a3b8;"><i class="bi bi-x"></i></button>
+            </div>
+            <div class="card-body" style="padding:20px;">
+                <div class="form-group">
+                    <label class="form-label">Name <span style="color:var(--danger)">*</span></label>
+                    <input type="text" x-model="newCustomer.name" class="form-control" placeholder="e.g. John Doe">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label">Phone</label>
+                    <input type="text" x-model="newCustomer.phone" class="form-control" placeholder="e.g. 01700000000">
+                </div>
+            </div>
+            <div style="padding:16px 20px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:10px;">
+                <button class="btn btn-outline" @click="showCustomerModal = false">Cancel</button>
+                <button class="btn btn-primary" @click="saveCustomer()" :disabled="savingCustomer || !newCustomer.name">
+                    <span x-text="savingCustomer ? 'Saving...' : 'Save Customer'"></span>
+                </button>
+            </div>
+            </div>
+        </div>
+    </div>
+    <!-- End POS Wrapper -->
     </div>
 
     <script>
@@ -114,8 +198,26 @@
                 searchQuery: '',
                 activeCategory: 'All',
                 discount: 0,
+                customerId: '',
+                saleDate: new Date().toISOString().split('T')[0],
+                processing: false,
                 items: @json($posItems),
+                customers: @json($customers),
                 cart: [],
+
+                showCustomerModal: false,
+                savingCustomer: false,
+                newCustomer: { name: '', phone: '' },
+
+                init() {
+                    flatpickr(this.$refs.datePicker, {
+                        defaultDate: this.saleDate,
+                        dateFormat: "Y-m-d",
+                        onChange: (selectedDates, dateStr) => {
+                            this.saleDate = dateStr;
+                        }
+                    });
+                },
 
                 filteredItems() {
                     return this.items.filter(item => {
@@ -179,16 +281,102 @@
                     return sum > 0 ? sum : 0;
                 },
 
-                checkout() {
+                async checkout() {
                     const totalBill = this.total();
-                    Swal.fire({
-                        title: 'Order Placed Successfully!',
-                        html: `<div style="font-size: 15px; margin-top: 8px;">Total Bill: <strong style="color: #16a34a; font-size: 18px;">৳${totalBill}</strong></div><div style="font-size: 13px; color: #64748b; margin-top: 6px;"><i class="bi bi-printer"></i> Receipt printed.</div>`,
-                        icon: 'success',
-                        confirmButtonColor: '#6366f1',
-                        confirmButtonText: 'OK'
-                    });
-                    this.clearCart();
+                    this.processing = true;
+
+                    try {
+                        const response = await fetch('{{ route('dashboard.pos-terminal.checkout') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({
+                                customer_id: this.customerId || null,
+                                sale_date: this.saleDate,
+                                discount: this.discount || 0,
+                                tax: this.tax(),
+                                subtotal: this.subtotal(),
+                                total: totalBill,
+                                cart: this.cart
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'Order Placed Successfully!',
+                                html: `<div style="font-size: 15px; margin-top: 8px;">Invoice: <strong>${data.invoice_no}</strong></div><div style="font-size: 15px; margin-top: 8px;">Total Bill: <strong style="color: #16a34a; font-size: 18px;">৳${totalBill}</strong></div><div style="font-size: 13px; color: #64748b; margin-top: 6px;"><i class="bi bi-printer"></i> Receipt printed.</div>`,
+                                icon: 'success',
+                                confirmButtonColor: '#6366f1',
+                                confirmButtonText: 'OK'
+                            });
+                            this.clearCart();
+                            // Optional: Update items stock based on checkout
+                            this.cart.forEach(cartItem => {
+                                let item = this.items.find(i => i.id === cartItem.id);
+                                if (item) item.stock -= cartItem.qty;
+                            });
+                        } else {
+                            throw new Error(data.message || 'Validation error');
+                        }
+                    } catch (error) {
+                        Swal.fire('Error', error.message || 'Something went wrong processing the checkout.', 'error');
+                    } finally {
+                        this.processing = false;
+                    }
+                },
+
+                async saveCustomer() {
+                    this.savingCustomer = true;
+                    try {
+                        const response = await fetch('{{ route('dashboard.customers.store') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({
+                                name: this.newCustomer.name,
+                                phone: this.newCustomer.phone || null,
+                                is_active: true
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            this.customers.push(data.customer);
+                            this.customerId = data.customer.id;
+                            
+                            // Append new option to select2 and select it
+                            const newOption = new Option(`${data.customer.name} (${data.customer.phone || 'No phone'})`, data.customer.id, true, true);
+                            $(this.$refs.customerSelect).append(newOption).trigger('change');
+                            
+                            this.showCustomerModal = false;
+                            this.newCustomer = { name: '', phone: '' };
+                            
+                            // Simple toast notification
+                            const toastContainer = document.getElementById('toastContainer');
+                            if (toastContainer) {
+                                const toast = document.createElement('div');
+                                toast.className = 'toast-msg success';
+                                toast.innerHTML = '<i class="bi bi-check-circle-fill"></i> Customer created successfully!';
+                                toastContainer.appendChild(toast);
+                                setTimeout(() => { toast.style.opacity='0'; toast.style.transform='translateX(20px)'; toast.style.transition='0.4s'; setTimeout(() => toast.remove(), 400); }, 4000);
+                            }
+                        } else {
+                            throw new Error(data.message || 'Failed to create customer');
+                        }
+                    } catch (error) {
+                        Swal.fire('Error', error.message, 'error');
+                    } finally {
+                        this.savingCustomer = false;
+                    }
                 }
             }
         }

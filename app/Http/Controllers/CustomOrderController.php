@@ -15,6 +15,7 @@ class CustomOrderController extends Controller
         $dbOrders = \App\Models\CustomOrder::orderBy('delivery_date', 'asc')->get();
         $orders = $dbOrders->map(function ($order) {
             return [
+                'real_id' => $order->id,
                 'id' => $order->order_number,
                 'customer' => $order->customer_name,
                 'details' => $order->details,
@@ -25,6 +26,64 @@ class CustomOrderController extends Controller
             ];
         })->toArray();
 
-        return view('dashboard.custom-orders', compact('orders'));
+        $customers = \App\Models\Customer::orderBy('name')->get();
+
+        return view('dashboard.custom-orders', compact('orders', 'customers'));
+    }
+
+    /**
+     * Store a new Custom Order.
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'customer_id' => 'nullable|exists:customers,id',
+            'customer_name' => 'required_without:customer_id|string|max:255',
+            'details' => 'required|string',
+            'delivery_date' => 'required|date',
+            'total_price' => 'required|numeric|min:0',
+            'advance_payment' => 'required|numeric|min:0',
+        ]);
+
+        if (!empty($validated['customer_id']) && empty($validated['customer_name'])) {
+            $customer = \App\Models\Customer::find($validated['customer_id']);
+            $validated['customer_name'] = $customer->name;
+        }
+
+        \App\Models\CustomOrder::create([
+            'order_number' => 'CO-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4)),
+            'customer_id' => $validated['customer_id'] ?? null,
+            'customer_name' => $validated['customer_name'],
+            'details' => $validated['details'],
+            'delivery_date' => $validated['delivery_date'],
+            'total_price' => $validated['total_price'],
+            'advance_payment' => $validated['advance_payment'],
+            'status' => 'Pending',
+        ]);
+
+        return redirect()->route('dashboard.custom-orders')->with('success', 'Custom order created successfully.');
+    }
+
+    /**
+     * Print Custom Order Slip.
+     */
+    public function print(\App\Models\CustomOrder $order): View
+    {
+        return view('dashboard.custom-orders-print', compact('order'));
+    }
+
+    /**
+     * Cancel Custom Order.
+     */
+    public function cancel(\App\Models\CustomOrder $order)
+    {
+        if ($order->status === 'Confirmed' || $order->status === 'In Progress') {
+            // Depending on business logic, maybe you can't cancel or maybe you can.
+            // Let's allow it for now.
+        }
+
+        $order->update(['status' => 'Cancelled']);
+
+        return redirect()->route('dashboard.custom-orders')->with('success', 'Custom order cancelled.');
     }
 }

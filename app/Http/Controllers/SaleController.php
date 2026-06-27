@@ -42,6 +42,12 @@ class SaleController extends Controller
         return view('dashboard.sales.show', compact('sale'));
     }
 
+    public function print(Sale $sale): View
+    {
+        $sale->load(['customer', 'creator', 'items.product.unit']);
+        return view('dashboard.sales.invoice', compact('sale'));
+    }
+
     public function edit(Sale $sale): View
     {
         if ($sale->status !== 'completed') {

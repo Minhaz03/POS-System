@@ -18,9 +18,9 @@
                     <i class="bi bi-pencil-square"></i> Edit Invoice
                 </a>
             @endif
-            <button onclick="window.print()" class="btn btn-outline">
-                <i class="bi bi-printer"></i> Print Receipt
-            </button>
+            <a href="{{ route('dashboard.sales.print', $sale) }}" target="_blank" class="btn btn-outline">
+                <i class="bi bi-printer"></i> Print Invoice
+            </a>
             <form id="delete-form" method="POST" action="{{ route('dashboard.sales.destroy', $sale) }}" style="display:inline;">
                 @csrf
                 @method('DELETE')

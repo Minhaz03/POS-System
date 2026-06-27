@@ -17,7 +17,6 @@ use App\Http\Controllers\BrandController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\RecipeController;
-use App\Http\Controllers\CustomOrderController;
 use App\Http\Controllers\ProductionBatchController;
 use Illuminate\Support\Facades\Route;
 
@@ -125,6 +124,8 @@ Route::middleware(['auth', 'verified'])->prefix('dashboard')->name('dashboard.')
         'destroy' => 'purchases.destroy',
     ]);
     Route::get('/POS-Terminal', [PosController::class, 'posTerminal'])->name('pos-terminal');
+    Route::post('/POS-Terminal/checkout', [PosController::class, 'checkout'])->name('pos-terminal.checkout');
+    Route::get('Sales/{sale}/print', [SaleController::class, 'print'])->name('sales.print');
     Route::resource('Sales', SaleController::class)->parameters(['Sales' => 'sale'])->except(['create', 'store'])->names([
         'index'   => 'sales',
         'show'    => 'sales.show',
@@ -144,7 +145,13 @@ Route::middleware(['auth', 'verified'])->prefix('dashboard')->name('dashboard.')
         'destroy' => 'recipes.destroy',
     ]);
     Route::get('/Production', [ProductionController::class, 'production'])->name('production');
+    Route::post('/Production', [ProductionController::class, 'store'])->name('production.store');
+    Route::patch('/Production/{batch}/complete', [ProductionController::class, 'complete'])->name('production.complete');
+    Route::patch('/Production/{batch}/cancel', [ProductionController::class, 'cancel'])->name('production.cancel');
     Route::get('/Custom-Orders', [CustomOrderController::class, 'customOrders'])->name('custom-orders');
+    Route::post('/Custom-Orders', [CustomOrderController::class, 'store'])->name('custom-orders.store');
+    Route::get('/Custom-Orders/{order}/print', [CustomOrderController::class, 'print'])->name('custom-orders.print');
+    Route::patch('/Custom-Orders/{order}/cancel', [CustomOrderController::class, 'cancel'])->name('custom-orders.cancel');
     Route::get('/Analytics', [AnalyticsController::class, 'analytics'])->name('analytics');
 });
 
