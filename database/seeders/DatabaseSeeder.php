@@ -28,6 +28,8 @@ class DatabaseSeeder extends Seeder
             CustomerSeeder::class,
             ProductSeeder::class,
             StockLedgerSeeder::class,
+            ProductionBatchSeeder::class,
+            CustomOrderSeeder::class,
         ]);
     }
 }

@@ -11,11 +11,11 @@
                     <input type="text" x-model="searchQuery" class="form-control" placeholder="Search menu items..." style="padding-left:36px;">
                     <i class="bi bi-search" style="position:absolute;left:13px;top:10px;color:#94a3b8;font-size:14px;"></i>
                 </div>
-                <div style="display:flex;gap:6px;">
+                <div style="display:flex;gap:6px;overflow-x:auto;">
                     <button class="btn btn-sm" :class="activeCategory === 'All' ? 'btn-primary' : 'btn-outline'" @click="activeCategory = 'All'">All</button>
-                    <button class="btn btn-sm" :class="activeCategory === 'Bread' ? 'btn-primary' : 'btn-outline'" @click="activeCategory = 'Bread'">Breads</button>
-                    <button class="btn btn-sm" :class="activeCategory === 'Pastry' ? 'btn-primary' : 'btn-outline'" @click="activeCategory = 'Pastry'">Pastries</button>
-                    <button class="btn btn-sm" :class="activeCategory === 'Cake' ? 'btn-primary' : 'btn-outline'" @click="activeCategory = 'Cake'">Cakes</button>
+                    @foreach($categories as $category)
+                        <button class="btn btn-sm" :class="activeCategory === '{{ $category }}' ? 'btn-primary' : 'btn-outline'" @click="activeCategory = '{{ $category }}'">{{ $category }}</button>
+                    @endforeach
                 </div>
             </div>
 

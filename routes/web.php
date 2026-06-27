@@ -3,7 +3,11 @@
 use App\Http\Controllers\Admin\ModuleController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\DashboardPageController;
+use App\Http\Controllers\PosController;
+use App\Http\Controllers\StockLedgerController;
+use App\Http\Controllers\ProductionController;
+use App\Http\Controllers\CustomOrderController;
+use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\SupplierController;
@@ -103,9 +107,9 @@ Route::middleware(['auth', 'verified'])->prefix('dashboard')->name('dashboard.')
         'destroy' => 'brands.destroy',
     ]);
 
-    Route::get('/Stock-Ledger', [DashboardPageController::class, 'stockLedger'])->name('stock-ledger');
-    Route::post('/Stock-Ledger/adjust', [DashboardPageController::class, 'adjustStock'])->name('stock-ledger.adjust');
-    Route::get('/Stock-Ledger/export', [DashboardPageController::class, 'exportExcel'])->name('stock-ledger.export');
+    Route::get('/Stock-Ledger', [StockLedgerController::class, 'stockLedger'])->name('stock-ledger');
+    Route::post('/Stock-Ledger/adjust', [StockLedgerController::class, 'adjustStock'])->name('stock-ledger.adjust');
+    Route::get('/Stock-Ledger/export', [StockLedgerController::class, 'exportExcel'])->name('stock-ledger.export');
     Route::post('Purchases/{purchase}/receive', [PurchaseController::class, 'receive'])->name('purchases.receive');
     Route::resource('Purchases', PurchaseController::class)->parameters([
         'Purchases' => 'purchase'
@@ -118,7 +122,7 @@ Route::middleware(['auth', 'verified'])->prefix('dashboard')->name('dashboard.')
         'update' => 'purchases.update',
         'destroy' => 'purchases.destroy',
     ]);
-    Route::get('/POS-Terminal', [DashboardPageController::class, 'posTerminal'])->name('pos-terminal');
+    Route::get('/POS-Terminal', [PosController::class, 'posTerminal'])->name('pos-terminal');
     Route::resource('Sales', SaleController::class)->parameters(['Sales' => 'sale'])->except(['create', 'store'])->names([
         'index'   => 'sales',
         'show'    => 'sales.show',
@@ -137,9 +141,9 @@ Route::middleware(['auth', 'verified'])->prefix('dashboard')->name('dashboard.')
         'update'  => 'recipes.update',
         'destroy' => 'recipes.destroy',
     ]);
-    Route::get('/Production', [DashboardPageController::class, 'production'])->name('production');
-    Route::get('/Custom-Orders', [DashboardPageController::class, 'customOrders'])->name('custom-orders');
-    Route::get('/Analytics', [DashboardPageController::class, 'analytics'])->name('analytics');
+    Route::get('/Production', [ProductionController::class, 'production'])->name('production');
+    Route::get('/Custom-Orders', [CustomOrderController::class, 'customOrders'])->name('custom-orders');
+    Route::get('/Analytics', [AnalyticsController::class, 'analytics'])->name('analytics');
 });
 
 Route::middleware('auth')->group(function () {
