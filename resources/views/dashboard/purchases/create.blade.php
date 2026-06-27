@@ -1,4 +1,53 @@
 <x-layouts.admin title="Create Purchase Order">
+    <!-- Select2 Assets & Custom Styling -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <style>
+        .select2-container--default .select2-selection--single {
+            height: 42px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 13.5px;
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #1e293b;
+            line-height: 28px;
+            padding-left: 2px;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 40px;
+            right: 8px;
+        }
+        .select2-container--default.select2-container--focus .select2-selection--single,
+        .select2-container--default .select2-selection--single:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+            outline: none;
+        }
+        .select2-dropdown {
+            border-color: #cbd5e1;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 9999;
+        }
+        .select2-results__option {
+            font-size: 13px;
+            padding: 8px 12px;
+        }
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #6366f1;
+        }
+        .select2-container {
+            width: 100% !important;
+        }
+    </style>
+
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
         <a href="{{ route('dashboard.purchases') }}" class="btn-topbar" style="padding:8px 12px;text-decoration:none;"><i class="bi bi-arrow-left"></i> Back</a>
         <div>
@@ -20,7 +69,7 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('dashboard.purchases.store') }}" id="purchase-form">
+    <form method="POST" action="{{ route('dashboard.purchases.store') }}" id="purchase-form" enctype="multipart/form-data">
         @csrf
 
         <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;align-items:start;">
@@ -34,7 +83,7 @@
                     <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
                         <div class="form-group">
                             <label class="form-label" for="supplier_id">Supplier <span style="color:#ef4444;">*</span></label>
-                            <select name="supplier_id" id="supplier_id" class="form-control" required style="cursor:pointer;">
+                            <select name="supplier_id" id="supplier_id" class="form-control select2" required style="cursor:pointer;width:100%;">
                                 <option value="">Select Supplier</option>
                                 @foreach($suppliers as $supplier)
                                     <option value="{{ $supplier->id }}" {{ old('supplier_id') == $supplier->id ? 'selected' : '' }}>
@@ -45,7 +94,12 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="purchase_date">Purchase Date <span style="color:#ef4444;">*</span></label>
-                            <input type="date" name="purchase_date" id="purchase_date" class="form-control" value="{{ old('purchase_date', date('Y-m-d')) }}" required>
+                            <input type="date" name="purchase_date" id="purchase_date" class="form-control" value="{{ old('purchase_date', date('Y-m-d')) }}" required style="height:42px;">
+                        </div>
+                        <div class="form-group" style="grid-column: span 2;margin-bottom:0;">
+                            <label class="form-label" for="attachment">Attachment Document (Invoice / Receipt / PO Scan)</label>
+                            <input type="file" name="attachment" id="attachment" class="form-control" accept="image/*,.pdf,.doc,.docx" style="padding: 7px 12px;height:auto;">
+                            <small style="color: #64748b; font-size: 11.5px; margin-top: 4px; display: block;">Supported formats: PDF, Images, DOC/DOCX (Max: 10MB)</small>
                         </div>
                     </div>
                 </div>
@@ -60,7 +114,7 @@
                         <div style="display:flex;gap:12px;margin-bottom:20px;align-items:flex-end;">
                             <div style="flex:1;">
                                 <label class="form-label" for="product_selector">Select Product to Add</label>
-                                <select id="product_selector" class="form-control" style="cursor:pointer;">
+                                <select id="product_selector" class="form-control select2" style="cursor:pointer;width:100%;">
                                     <option value="">-- Choose Product --</option>
                                     @foreach($products as $product)
                                         <option value="{{ $product->id }}" data-cost="{{ $product->cost_price }}" data-unit="{{ $product->unit?->short_name ?? 'pcs' }}" data-sku="{{ $product->sku }}">
@@ -175,7 +229,19 @@
     </form>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        $(document).ready(function() {
+            // Initialize Select2 dropdowns
+            $('#supplier_id').select2({
+                placeholder: 'Select Supplier',
+                allowClear: true,
+                width: '100%'
+            });
+            $('#product_selector').select2({
+                placeholder: '-- Choose Product --',
+                allowClear: true,
+                width: '100%'
+            });
+
             let rowIndex = 0;
             const itemsTbody = document.getElementById('items-tbody');
             const emptyRow = document.getElementById('empty-row');
@@ -194,7 +260,7 @@
             // Add Product to list
             btnAddProduct.addEventListener('click', function() {
                 const selectedOpt = productSelector.options[productSelector.selectedIndex];
-                if (!selectedOpt.value) {
+                if (!selectedOpt || !selectedOpt.value) {
                     Swal.fire('Error', 'Please select a product first.', 'error');
                     return;
                 }
@@ -262,8 +328,8 @@
                 rowIndex++;
                 calculateTotals();
                 
-                // Reset select
-                productSelector.value = '';
+                // Reset select with select2 trigger
+                $('#product_selector').val('').trigger('change');
             });
 
             function checkIfEmpty() {

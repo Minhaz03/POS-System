@@ -17,6 +17,8 @@ use App\Http\Controllers\BrandController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\RecipeController;
+use App\Http\Controllers\CustomOrderController;
+use App\Http\Controllers\ProductionBatchController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {

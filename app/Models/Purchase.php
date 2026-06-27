@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'payment_status',
     'payment_method',
     'notes',
+    'attachment',
     'created_by',
 ])]
 class Purchase extends Model

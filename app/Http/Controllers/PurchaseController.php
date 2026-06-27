@@ -58,13 +58,19 @@ class PurchaseController extends Controller
             'amount_paid'     => 'required|numeric|min:0',
             'payment_method'  => 'nullable|in:cash,bank_transfer,cheque,credit',
             'notes'           => 'nullable|string',
+            'attachment'      => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
             'items'           => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity'   => 'required|numeric|min:0.001',
             'items.*.unit_cost'  => 'required|numeric|min:0',
         ]);
 
-        DB::transaction(function () use ($validated, $request) {
+        $attachmentPath = null;
+        if ($request->hasFile('attachment')) {
+            $attachmentPath = $request->file('attachment')->store('purchases/attachments', 'public');
+        }
+
+        DB::transaction(function () use ($validated, $attachmentPath) {
             $subtotal = 0;
             foreach ($validated['items'] as $item) {
                 $subtotal += $item['quantity'] * $item['unit_cost'];
@@ -92,6 +98,7 @@ class PurchaseController extends Controller
                 'payment_status'  => $paymentStatus,
                 'payment_method'  => $validated['payment_method'],
                 'notes'           => $validated['notes'],
+                'attachment'      => $attachmentPath,
                 'status'          => 'ordered',
                 'created_by'      => auth()->id(),
             ]);
@@ -152,13 +159,19 @@ class PurchaseController extends Controller
             'amount_paid'     => 'required|numeric|min:0',
             'payment_method'  => 'nullable|in:cash,bank_transfer,cheque,credit',
             'notes'           => 'nullable|string',
+            'attachment'      => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
             'items'           => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity'   => 'required|numeric|min:0.001',
             'items.*.unit_cost'  => 'required|numeric|min:0',
         ]);
 
-        DB::transaction(function () use ($validated, $purchase) {
+        $attachmentPath = $purchase->attachment;
+        if ($request->hasFile('attachment')) {
+            $attachmentPath = $request->file('attachment')->store('purchases/attachments', 'public');
+        }
+
+        DB::transaction(function () use ($validated, $purchase, $attachmentPath) {
             // Reverse old supplier balance
             if ($purchase->supplier_id) {
                 $purchase->supplier->decrement('current_balance', $purchase->amount_due);
@@ -187,6 +200,7 @@ class PurchaseController extends Controller
                 'payment_status'  => $paymentStatus,
                 'payment_method'  => $validated['payment_method'],
                 'notes'           => $validated['notes'],
+                'attachment'      => $attachmentPath,
             ]);
 
             // Replace items

@@ -1,5 +1,54 @@
 <x-layouts.admin title="Add New Recipe">
 
+    <!-- Select2 Assets & Custom Styling -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <style>
+        .select2-container--default .select2-selection--single {
+            height: 38px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 4px 8px;
+            font-size: 13px;
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #1e293b;
+            line-height: 28px;
+            padding-left: 2px;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px;
+            right: 8px;
+        }
+        .select2-container--default.select2-container--focus .select2-selection--single,
+        .select2-container--default .select2-selection--single:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+            outline: none;
+        }
+        .select2-dropdown {
+            border-color: #cbd5e1;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 9999;
+        }
+        .select2-results__option {
+            font-size: 13px;
+            padding: 8px 12px;
+        }
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #6366f1;
+        }
+        .select2-container {
+            width: 100% !important;
+        }
+    </style>
+
     {{-- Breadcrumb --}}
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
         <a href="{{ route('dashboard.recipes') }}" class="btn-topbar" style="padding:8px 12px;text-decoration:none;"><i class="bi bi-arrow-left"></i> Back to Recipes</a>
@@ -55,7 +104,7 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="product_id">Linked Product (Optional)</label>
-                            <select name="product_id" id="product_id" class="form-control" style="cursor:pointer;">
+                            <select name="product_id" id="product_id" class="form-control select2" style="cursor:pointer; width:100%;">
                                 <option value="">-- No linked product --</option>
                                 @foreach($products as $product)
                                     <option value="{{ $product->id }}" {{ old('product_id') == $product->id ? 'selected' : '' }}>{{ $product->name }} ({{ $product->sku }})</option>
@@ -204,7 +253,14 @@
     </form>
 
     <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    $(document).ready(function () {
+        // Initialize Select2 on Linked Product
+        $('#product_id').select2({
+            placeholder: '-- No linked product --',
+            allowClear: true,
+            width: '100%'
+        });
+
         let rowIndex = 0;
         const tbody = document.getElementById('ingredients-tbody');
         const tfoot = document.getElementById('ingredients-tfoot');
@@ -234,7 +290,7 @@
             tr.innerHTML = `
                 <td style="padding:10px 14px;">
                     <div style="display:flex;flex-direction:column;gap:6px;">
-                        <select name="ingredients[product_id][]" class="form-control ing-product-select" style="font-size:13px;">
+                        <select name="ingredients[product_id][]" class="form-control ing-product-select" style="font-size:13px;width:100%;">
                             ${productOptionsHTML}
                         </select>
                         <input type="text" name="ingredients[ingredient_name][]" value="${prefill.ingredient_name || ''}" class="form-control ing-name" placeholder="Ingredient Name" required style="font-size:13px;">
@@ -257,28 +313,35 @@
                 </td>
             `;
             tbody.appendChild(tr);
-            bindRow(tr);
             if (prefill.product_id) {
                 tr.querySelector('.ing-product-select').value = prefill.product_id;
             }
+            bindRow(tr);
             recalc();
             rowIndex++;
         }
 
         function bindRow(tr) {
-            const productSelect = tr.querySelector('.ing-product-select');
+            const $productSelect = $(tr).find('.ing-product-select');
             const nameInput     = tr.querySelector('.ing-name');
             const qtyInput      = tr.querySelector('.ing-qty');
             const unitInput     = tr.querySelector('.ing-unit');
             const costInput     = tr.querySelector('.ing-cost');
             const delBtn        = tr.querySelector('.btn-del-row');
 
-            productSelect.addEventListener('change', function () {
-                const opt = productSelect.options[productSelect.selectedIndex];
-                if (opt && opt.value) {
-                    nameInput.value = opt.getAttribute('data-name') || '';
-                    unitInput.value = opt.getAttribute('data-unit') || '';
-                    costInput.value = parseFloat(opt.getAttribute('data-cost') || 0).toFixed(2);
+            $productSelect.select2({
+                placeholder: '-- Custom (No link) --',
+                allowClear: true,
+                width: '100%'
+            });
+
+            $productSelect.on('change', function () {
+                const selectedOpt = $(this).find(':selected');
+                const val = $(this).val();
+                if (val && selectedOpt.length) {
+                    nameInput.value = selectedOpt.attr('data-name') || '';
+                    unitInput.value = selectedOpt.attr('data-unit') || '';
+                    costInput.value = parseFloat(selectedOpt.attr('data-cost') || 0).toFixed(2);
                 }
                 recalc();
             });
@@ -286,6 +349,7 @@
             qtyInput.addEventListener('input', recalc);
             costInput.addEventListener('input', recalc);
             delBtn.addEventListener('click', function () {
+                $productSelect.select2('destroy');
                 tr.remove();
                 if (tbody.querySelectorAll('tr:not(#empty-ing-row)').length === 0) {
                     emptyRow.style.display = '';
