@@ -2,8 +2,9 @@
 
     <div style="display:flex;justify-content:between;align-items:center;margin-bottom:24px;">
         <div>
-            <h2 style="font-size:22px;font-weight:800;color:#0f172a;margin:0;">Reporting & Analytics</h2>
-            <p style="font-size:13.5px;color:#64748b;margin:4px 0 0 0;">View business sales trends, menu performance, and financial analytics.</p>
+            <h2 style="font-size:22px;font-weight:800;color:#0f172a;margin:0;">Report & Analytics</h2>
+            <p style="font-size:13.5px;color:#64748b;margin:4px 0 0 0;">View business sales trends, menu performance, and
+                financial analytics.</p>
         </div>
         <button class="btn btn-primary" style="margin-left:auto;">
             <i class="bi bi-calendar3"></i> Date Filter: Last 7 Days
@@ -12,31 +13,46 @@
 
     <!-- Analytics KPIs -->
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;margin-bottom:24px;">
-        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;display:flex;align-items:center;gap:16px;">
-            <div style="width:48px;height:48px;border-radius:12px;background:rgba(99,102,241,0.1);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--primary);">
+        <div
+            style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;display:flex;align-items:center;gap:16px;">
+            <div
+                style="width:48px;height:48px;border-radius:12px;background:rgba(99,102,241,0.1);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--primary);">
                 <i class="bi bi-cash-stack"></i>
             </div>
             <div>
-                <div style="font-size:11.5px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;">Total Sales Revenue</div>
-                <div style="font-size:22px;font-weight:800;color:#0f172a;">৳ {{ number_format($analytics['total_sales'], 2) }}</div>
+                <div
+                    style="font-size:11.5px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;">
+                    Total Sales Revenue</div>
+                <div style="font-size:22px;font-weight:800;color:#0f172a;">৳
+                    {{ number_format($analytics['total_sales'], 2) }}</div>
             </div>
         </div>
-        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;display:flex;align-items:center;gap:16px;">
-            <div style="width:48px;height:48px;border-radius:12px;background:rgba(16,185,129,0.1);display:flex;align-items:center;justify-content:center;font-size:22px;color:#10b981;">
+        <div
+            style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;display:flex;align-items:center;gap:16px;">
+            <div
+                style="width:48px;height:48px;border-radius:12px;background:rgba(16,185,129,0.1);display:flex;align-items:center;justify-content:center;font-size:22px;color:#10b981;">
                 <i class="bi bi-cart-check"></i>
             </div>
             <div>
-                <div style="font-size:11.5px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;">Completed Orders</div>
-                <div style="font-size:22px;font-weight:800;color:#0f172a;">{{ $analytics['orders_count'] }} invoices</div>
+                <div
+                    style="font-size:11.5px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;">
+                    Completed Orders</div>
+                <div style="font-size:22px;font-weight:800;color:#0f172a;">{{ $analytics['orders_count'] }} invoices
+                </div>
             </div>
         </div>
-        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;display:flex;align-items:center;gap:16px;">
-            <div style="width:48px;height:48px;border-radius:12px;background:rgba(245,158,11,0.1);display:flex;align-items:center;justify-content:center;font-size:22px;color:#f59e0b;">
+        <div
+            style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;display:flex;align-items:center;gap:16px;">
+            <div
+                style="width:48px;height:48px;border-radius:12px;background:rgba(245,158,11,0.1);display:flex;align-items:center;justify-content:center;font-size:22px;color:#f59e0b;">
                 <i class="bi bi-ticket-perforated"></i>
             </div>
             <div>
-                <div style="font-size:11.5px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;">Average Order Value</div>
-                <div style="font-size:22px;font-weight:800;color:#0f172a;">৳ {{ number_format($analytics['avg_order_value'], 2) }}</div>
+                <div
+                    style="font-size:11.5px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;">
+                    Average Order Value</div>
+                <div style="font-size:22px;font-weight:800;color:#0f172a;">৳
+                    {{ number_format($analytics['avg_order_value'], 2) }}</div>
             </div>
         </div>
     </div>
@@ -83,16 +99,21 @@
                     </tr>
                 </thead>
                 <tbody style="color:#334155;">
-                    @foreach($analytics['top_selling'] as $index => $item)
-                    <tr style="border-bottom:1px solid #f1f5f9;">
-                        <td style="padding:14px 20px;font-weight:800;color:var(--primary);">#{{ $index + 1 }}</td>
-                        <td style="padding:14px 20px;font-weight:700;color:#0f172a;">{{ $item['name'] }}</td>
-                        <td style="padding:14px 20px;text-align:center;font-weight:600;">{{ $item['qty'] }} units</td>
-                        <td style="padding:14px 20px;text-align:right;font-weight:700;color:#0f172a;">৳ {{ number_format($item['revenue'], 2) }}</td>
-                        <td style="padding:14px 20px;text-align:center;">
-                            <span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;"><i class="bi bi-graph-up-arrow"></i> High Performer</span>
-                        </td>
-                    </tr>
+                    @foreach ($analytics['top_selling'] as $index => $item)
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:14px 20px;font-weight:800;color:var(--primary);">#{{ $index + 1 }}
+                            </td>
+                            <td style="padding:14px 20px;font-weight:700;color:#0f172a;">{{ $item['name'] }}</td>
+                            <td style="padding:14px 20px;text-align:center;font-weight:600;">{{ $item['qty'] }} units
+                            </td>
+                            <td style="padding:14px 20px;text-align:right;font-weight:700;color:#0f172a;">৳
+                                {{ number_format($item['revenue'], 2) }}</td>
+                            <td style="padding:14px 20px;text-align:center;">
+                                <span
+                                    style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;"><i
+                                        class="bi bi-graph-up-arrow"></i> High Performer</span>
+                            </td>
+                        </tr>
                     @endforeach
                 </tbody>
             </table>
@@ -124,10 +145,22 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
                     scales: {
-                        y: { grid: { color: '#f1f5f9' } },
-                        x: { grid: { display: false } }
+                        y: {
+                            grid: {
+                                color: '#f1f5f9'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
                     }
                 }
             });
@@ -151,7 +184,12 @@
                     plugins: {
                         legend: {
                             position: 'bottom',
-                            labels: { boxWidth: 12, font: { size: 11 } }
+                            labels: {
+                                boxWidth: 12,
+                                font: {
+                                    size: 11
+                                }
+                            }
                         }
                     }
                 }
