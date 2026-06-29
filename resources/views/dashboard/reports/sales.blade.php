@@ -82,8 +82,8 @@
                             <td style="padding:12px 16px;">{{ $sale->customer ? $sale->customer->name : 'Walk-in Customer' }}</td>
                             <td style="padding:12px 16px;text-align:center;">{{ $sale->items->sum('quantity') }}</td>
                             <td style="padding:12px 16px;text-align:right;font-weight:600;">{{ number_format($sale->grand_total, 2) }}</td>
-                            <td style="padding:12px 16px;text-align:right;color:#10b981;">{{ number_format($sale->amount_paid, 2) }}</td>
-                            <td style="padding:12px 16px;text-align:right;color:#ef4444;">{{ number_format($sale->grand_total - $sale->amount_paid, 2) }}</td>
+                            <td style="padding:12px 16px;text-align:right;color:#10b981;">{{ number_format($sale->amount_tendered, 2) }}</td>
+                            <td style="padding:12px 16px;text-align:right;color:#ef4444;">{{ number_format($sale->grand_total - $sale->amount_tendered, 2) }}</td>
                             <td style="padding:12px 16px;">
                                 @if($sale->payment_status == 'paid')
                                     <span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Paid</span>

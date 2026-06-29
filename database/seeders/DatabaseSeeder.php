@@ -29,7 +29,10 @@ class DatabaseSeeder extends Seeder
             CustomerSeeder::class,
             ProductSeeder::class,
             StockLedgerSeeder::class,
+            PurchaseSeeder::class,
+            RecipeSeeder::class,
             ProductionBatchSeeder::class,
+            SaleSeeder::class,
             CustomOrderSeeder::class,
         ]);
     }

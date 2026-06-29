@@ -31,9 +31,9 @@ class ReportController extends Controller
 
         $summary = [
             'total_sales' => $sales->sum('grand_total'),
-            'total_paid' => $sales->sum('amount_paid'),
+            'total_paid' => $sales->sum('amount_tendered'),
             'total_due' => $sales->sum(function($sale) {
-                return $sale->grand_total - $sale->amount_paid;
+                return $sale->grand_total - $sale->amount_tendered;
             }),
             'total_discount' => $sales->sum('discount_amount'),
             'total_tax' => $sales->sum('tax_amount'),
