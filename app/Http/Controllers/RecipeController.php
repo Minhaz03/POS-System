@@ -48,8 +48,9 @@ class RecipeController extends Controller
     public function create(): View
     {
         $products = Product::with('unit')->where('is_active', true)->orderBy('name')->get();
+        $allUnits = \App\Models\Unit::all();
 
-        return view('dashboard.recipes.create', compact('products'));
+        return view('dashboard.recipes.create', compact('products', 'allUnits'));
     }
 
     /**
@@ -108,8 +109,9 @@ class RecipeController extends Controller
     {
         $recipe->load(['product', 'ingredients.product']);
         $products = Product::with('unit')->where('is_active', true)->orderBy('name')->get();
+        $allUnits = \App\Models\Unit::all();
 
-        return view('dashboard.recipes.edit', compact('recipe', 'products'));
+        return view('dashboard.recipes.edit', compact('recipe', 'products', 'allUnits'));
     }
 
     /**
@@ -173,7 +175,7 @@ class RecipeController extends Controller
         $ingredientNames = $request->input('ingredients.ingredient_name', []);
         $productIds      = $request->input('ingredients.product_id', []);
         $quantities      = $request->input('ingredients.quantity', []);
-        $units           = $request->input('ingredients.unit', []);
+        $unitIds         = $request->input('ingredients.unit_id', []);
         $unitCosts       = $request->input('ingredients.unit_cost', []);
         $notes           = $request->input('ingredients.notes', []);
 
@@ -185,13 +187,38 @@ class RecipeController extends Controller
             $qty      = (float) ($quantities[$index] ?? 0);
             $cost     = (float) ($unitCosts[$index] ?? 0);
             $subtotal = $qty * $cost;
+            $unitId   = !empty($unitIds[$index]) ? $unitIds[$index] : null;
+
+            $netQty = $qty;
+            if ($unitId) {
+                $recipeUnit = \App\Models\Unit::find($unitId);
+                $baseQuantity = $recipeUnit ? $recipeUnit->calculateBaseQuantity($qty) : $qty;
+                
+                if (!empty($productIds[$index])) {
+                    $product = \App\Models\Product::with('unit')->find($productIds[$index]);
+                    $productUnit = $product?->unit;
+                    
+                    if ($productUnit && $productUnit->base_unit_id) {
+                        if ($productUnit->operator === '*') {
+                            $netQty = $baseQuantity / $productUnit->conversion_rate;
+                        } else {
+                            $netQty = $baseQuantity * $productUnit->conversion_rate;
+                        }
+                    } else {
+                        $netQty = $baseQuantity;
+                    }
+                } else {
+                    $netQty = $baseQuantity;
+                }
+            }
 
             RecipeIngredient::create([
                 'recipe_id'       => $recipe->id,
                 'product_id'      => !empty($productIds[$index]) ? $productIds[$index] : null,
                 'ingredient_name' => trim($name),
                 'quantity'        => $qty,
-                'unit'            => $units[$index] ?? null,
+                'unit_id'         => $unitId,
+                'net_quantity'    => $netQty,
                 'unit_cost'       => $cost,
                 'subtotal'        => $subtotal,
                 'notes'           => $notes[$index] ?? null,

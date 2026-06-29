@@ -22,6 +22,7 @@ class PosController extends Controller
         $products = Product::with('category')
             ->where('is_active', true)
             ->where('is_pos_enabled', true)
+            ->whereIn('product_type', ['ready_made', 'finished_product'])
             ->get();
 
         $posItems = $products->map(function ($product) {

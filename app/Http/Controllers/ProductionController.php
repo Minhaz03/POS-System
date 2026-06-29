@@ -55,11 +55,18 @@ class ProductionController extends Controller
     /**
      * Mark Production Batch as Completed.
      */
-    public function complete(\App\Models\ProductionBatch $batch)
+    public function complete(\App\Models\ProductionBatch $batch, Request $request)
     {
         if ($batch->status === 'Completed' || $batch->status === 'Cancelled') {
             return redirect()->back()->with('error', 'Cannot complete this batch.');
         }
+
+        $validated = $request->validate([
+            'wastage_qty' => 'nullable|numeric|min:0',
+            'wastage_notes' => 'nullable|string',
+            'manufacturing_date' => 'nullable|date',
+            'expiry_date' => 'nullable|date',
+        ]);
 
         $recipe = $batch->recipe()->with('ingredients.product', 'product')->first();
 
@@ -69,12 +76,21 @@ class ProductionController extends Controller
 
         $multiplier = $batch->qty / $recipe->yield_qty;
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($batch, $recipe, $multiplier) {
+        \Illuminate\Support\Facades\DB::transaction(function () use ($batch, $recipe, $multiplier, $validated) {
             // Deduct raw ingredients
             foreach ($recipe->ingredients as $ingredient) {
                 if ($ingredient->product) {
-                    $deductQty = $ingredient->quantity * $multiplier;
+                    // deduct the base/net quantity from the stock
+                    $deductQty = $ingredient->net_quantity * $multiplier;
                     $ingredient->product->decrement('stock_qty', $deductQty);
+
+                    \App\Models\ProductionConsumption::create([
+                        'production_batch_id' => $batch->id,
+                        'product_id' => $ingredient->product_id,
+                        'qty' => $deductQty,
+                        'unit_cost' => $ingredient->product->cost_price,
+                        'total_cost' => $deductQty * $ingredient->product->cost_price,
+                    ]);
 
                     \App\Models\StockLedger::create([
                         'product_id' => $ingredient->product_id,
@@ -86,22 +102,29 @@ class ProductionController extends Controller
                 }
             }
 
-            // Add finished product
-            if ($recipe->product) {
-                $recipe->product->increment('stock_qty', $batch->qty);
+            // Add finished product (qty - wastage)
+            $wastageQty = $validated['wastage_qty'] ?? 0;
+            $netOutput = $batch->qty - $wastageQty;
+
+            if ($recipe->product && $netOutput > 0) {
+                $recipe->product->increment('stock_qty', $netOutput);
 
                 \App\Models\StockLedger::create([
                     'product_id' => $recipe->product_id,
                     'type'       => 'Production (+)',
-                    'qty'        => $batch->qty,
+                    'qty'        => $netOutput,
                     'user_id'    => auth()->id(),
-                    'notes'      => "Produced from batch: {$batch->batch_code}",
+                    'notes'      => "Produced from batch: {$batch->batch_code}" . ($wastageQty > 0 ? " (Wastage: $wastageQty)" : ''),
                 ]);
             }
 
             $batch->update([
                 'status'       => 'Completed',
                 'completed_at' => now(),
+                'manufacturing_date' => $validated['manufacturing_date'] ?? null,
+                'expiry_date' => $validated['expiry_date'] ?? null,
+                'wastage_qty' => $wastageQty,
+                'wastage_notes' => $validated['wastage_notes'] ?? null,
             ]);
         });
 

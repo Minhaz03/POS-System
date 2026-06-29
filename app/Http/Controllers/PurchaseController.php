@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
 use App\Models\Supplier;
+use App\Models\Unit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -42,9 +43,14 @@ class PurchaseController extends Controller
     public function create(): View
     {
         $suppliers = Supplier::where('is_active', true)->orderBy('name')->get();
-        $products  = Product::where('is_active', true)->with('unit')->orderBy('name')->get();
+        $products  = Product::where('is_active', true)
+                            ->whereIn('product_type', ['raw_material', 'ready_made'])
+                            ->with('unit')
+                            ->orderBy('name')
+                            ->get();
+        $allUnits = Unit::all();
 
-        return view('dashboard.purchases.create', compact('suppliers', 'products'));
+        return view('dashboard.purchases.create', compact('suppliers', 'products', 'allUnits'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -61,6 +67,7 @@ class PurchaseController extends Controller
             'attachment'      => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
             'items'           => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
+            'items.*.unit_id'    => 'required|exists:units,id',
             'items.*.quantity'   => 'required|numeric|min:0.001',
             'items.*.unit_cost'  => 'required|numeric|min:0',
         ]);
@@ -104,12 +111,29 @@ class PurchaseController extends Controller
             ]);
 
             foreach ($validated['items'] as $item) {
+                $purchaseUnit = Unit::find($item['unit_id']);
+                $baseQuantity = $purchaseUnit ? $purchaseUnit->calculateBaseQuantity($item['quantity']) : $item['quantity'];
+
+                $product = Product::with('unit')->find($item['product_id']);
+                $productUnit = $product->unit;
+                
+                $netQty = $baseQuantity;
+                if ($productUnit && $productUnit->base_unit_id) {
+                    if ($productUnit->operator === '*') {
+                        $netQty = $baseQuantity / $productUnit->conversion_rate;
+                    } else {
+                        $netQty = $baseQuantity * $productUnit->conversion_rate;
+                    }
+                }
+
                 PurchaseItem::create([
-                    'purchase_id' => $purchase->id,
-                    'product_id'  => $item['product_id'],
-                    'quantity'    => $item['quantity'],
-                    'unit_cost'   => $item['unit_cost'],
-                    'subtotal'    => $item['quantity'] * $item['unit_cost'],
+                    'purchase_id'  => $purchase->id,
+                    'product_id'   => $item['product_id'],
+                    'unit_id'      => $item['unit_id'],
+                    'quantity'     => $item['quantity'],
+                    'net_quantity' => $netQty,
+                    'unit_cost'    => $item['unit_cost'],
+                    'subtotal'     => $item['quantity'] * $item['unit_cost'],
                 ]);
             }
 
@@ -137,10 +161,15 @@ class PurchaseController extends Controller
         }
 
         $suppliers = Supplier::where('is_active', true)->orderBy('name')->get();
-        $products  = Product::where('is_active', true)->with('unit')->orderBy('name')->get();
+        $products  = Product::where('is_active', true)
+                            ->whereIn('product_type', ['raw_material', 'ready_made'])
+                            ->with('unit')
+                            ->orderBy('name')
+                            ->get();
         $purchase->load('items.product');
+        $allUnits = Unit::all();
 
-        return view('dashboard.purchases.edit', compact('purchase', 'suppliers', 'products'));
+        return view('dashboard.purchases.edit', compact('purchase', 'suppliers', 'products', 'allUnits'));
     }
 
     public function update(Request $request, Purchase $purchase): RedirectResponse
@@ -162,6 +191,7 @@ class PurchaseController extends Controller
             'attachment'      => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
             'items'           => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
+            'items.*.unit_id'    => 'required|exists:units,id',
             'items.*.quantity'   => 'required|numeric|min:0.001',
             'items.*.unit_cost'  => 'required|numeric|min:0',
         ]);
@@ -206,12 +236,29 @@ class PurchaseController extends Controller
             // Replace items
             $purchase->items()->delete();
             foreach ($validated['items'] as $item) {
+                $purchaseUnit = Unit::find($item['unit_id']);
+                $baseQuantity = $purchaseUnit ? $purchaseUnit->calculateBaseQuantity($item['quantity']) : $item['quantity'];
+
+                $product = Product::with('unit')->find($item['product_id']);
+                $productUnit = $product->unit;
+                
+                $netQty = $baseQuantity;
+                if ($productUnit && $productUnit->base_unit_id) {
+                    if ($productUnit->operator === '*') {
+                        $netQty = $baseQuantity / $productUnit->conversion_rate;
+                    } else {
+                        $netQty = $baseQuantity * $productUnit->conversion_rate;
+                    }
+                }
+
                 PurchaseItem::create([
-                    'purchase_id' => $purchase->id,
-                    'product_id'  => $item['product_id'],
-                    'quantity'    => $item['quantity'],
-                    'unit_cost'   => $item['unit_cost'],
-                    'subtotal'    => $item['quantity'] * $item['unit_cost'],
+                    'purchase_id'  => $purchase->id,
+                    'product_id'   => $item['product_id'],
+                    'unit_id'      => $item['unit_id'],
+                    'quantity'     => $item['quantity'],
+                    'net_quantity' => $netQty,
+                    'unit_cost'    => $item['unit_cost'],
+                    'subtotal'     => $item['quantity'] * $item['unit_cost'],
                 ]);
             }
 
@@ -240,11 +287,18 @@ class PurchaseController extends Controller
             $purchase->load('items.product');
 
             foreach ($purchase->items as $item) {
-                // Increment product stock
-                $item->product->increment('stock_qty', $item->quantity);
+                // Increment product stock using net_quantity
+                $item->product->increment('stock_qty', $item->net_quantity);
 
                 // Update cost price to the latest purchase cost
-                $item->product->update(['cost_price' => $item->unit_cost]);
+                // We should probably normalize the cost price to the base unit, but for simplicity let's assume unit_cost is per purchased unit.
+                // It's better to convert the cost_price to the stock unit price.
+                $stockUnitCost = $item->unit_cost;
+                if ($item->quantity > 0 && $item->net_quantity > 0) {
+                    $stockUnitCost = ($item->unit_cost * $item->quantity) / $item->net_quantity;
+                }
+                
+                $item->product->update(['cost_price' => $stockUnitCost]);
             }
 
             $purchase->update(['status' => 'received']);

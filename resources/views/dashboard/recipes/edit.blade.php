@@ -175,7 +175,7 @@
                                                 <select name="ingredients[product_id][]" class="form-control ing-product-select" style="font-size:13px;width:100%;">
                                                     <option value="">-- Custom (No link) --</option>
                                                     @foreach($products as $prod)
-                                                        <option value="{{ $prod->id }}" data-name="{{ $prod->name }}" data-unit="{{ $prod->unit?->short_name }}" data-cost="{{ $prod->cost_price }}" {{ $ing->product_id == $prod->id ? 'selected' : '' }}>
+                                                        <option value="{{ $prod->id }}" data-name="{{ $prod->name }}" data-unit-id="{{ $prod->unit_id }}" data-base-unit-id="{{ $prod->unit?->base_unit_id }}" data-cost="{{ $prod->cost_price }}" {{ $ing->product_id == $prod->id ? 'selected' : '' }}>
                                                             {{ $prod->name }} (SKU: {{ $prod->sku }} | Cost: ৳{{ $prod->cost_price }})
                                                         </option>
                                                     @endforeach
@@ -187,7 +187,22 @@
                                             <input type="number" step="0.001" min="0" name="ingredients[quantity][]" value="{{ $ing->quantity }}" class="form-control ing-qty" style="font-size:13px;text-align:center;" required>
                                         </td>
                                         <td style="padding:10px 14px;">
-                                            <input type="text" name="ingredients[unit][]" value="{{ $ing->unit }}" class="form-control ing-unit" style="font-size:13px;text-align:center;" list="unit-suggestions" placeholder="g">
+                                            <select name="ingredients[unit_id][]" class="form-control ing-unit" style="font-size:13px;" required>
+                                                <option value="">-- Unit --</option>
+                                                @foreach($allUnits as $u)
+                                                    @php
+                                                        $isVisible = true;
+                                                        if ($ing->product_id && $ing->product) {
+                                                            $pUnitId = $ing->product->unit_id;
+                                                            $pBaseId = $ing->product->unit?->base_unit_id;
+                                                            $isVisible = ($u->id == $pUnitId || $u->base_unit_id == $pUnitId || ($pBaseId && ($u->id == $pBaseId || $u->base_unit_id == $pBaseId)));
+                                                        }
+                                                    @endphp
+                                                    <option value="{{ $u->id }}" data-base-unit-id="{{ $u->base_unit_id }}" {{ $ing->unit_id == $u->id ? 'selected' : '' }} style="display:{{ $isVisible ? '' : 'none' }}" {{ $isVisible ? '' : 'disabled' }}>
+                                                        {{ $u->short_name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
                                         </td>
                                         <td style="padding:10px 14px;">
                                             <input type="number" step="0.01" min="0" name="ingredients[unit_cost][]" value="{{ $ing->unit_cost }}" class="form-control ing-cost" style="font-size:13px;text-align:right;" required>
@@ -290,18 +305,7 @@
         </div>
     </form>
 
-    <datalist id="unit-suggestions">
-        <option value="g">
-        <option value="kg">
-        <option value="ml">
-        <option value="L">
-        <option value="pcs">
-        <option value="tsp">
-        <option value="tbsp">
-        <option value="cup">
-        <option value="oz">
-        <option value="lb">
-    </datalist>
+    {{-- Datalist for units removed as we now use select --}}
 
     <script>
     $(document).ready(function () {
@@ -317,10 +321,14 @@
         const totalDisplay = document.getElementById('total-cost-display');
         const summaryDisplay = document.getElementById('summary-cost');
 
+        const allUnits = @json($allUnits);
+        const unitMap = {};
+        allUnits.forEach(u => unitMap[u.id] = u);
+
         const productOptionsHTML = `
             <option value="">-- Custom (No link) --</option>
             @foreach($products as $prod)
-                <option value="{{ $prod->id }}" data-name="{{ $prod->name }}" data-unit="{{ $prod->unit?->short_name }}" data-cost="{{ $prod->cost_price }}">
+                <option value="{{ $prod->id }}" data-name="{{ $prod->name }}" data-unit-id="{{ $prod->unit_id }}" data-base-unit-id="{{ $prod->unit?->base_unit_id }}" data-cost="{{ $prod->cost_price }}">
                     {{ $prod->name }} (SKU: {{ $prod->sku }} | Cost: ৳{{ $prod->cost_price }})
                 </option>
             @endforeach
@@ -348,6 +356,11 @@
             }
             tfoot.style.display = '';
 
+            let unitOptionsHTML = '<option value="">-- Unit --</option>';
+            allUnits.forEach(u => {
+                unitOptionsHTML += `<option value="${u.id}" data-base-unit-id="${u.base_unit_id}">${u.short_name}</option>`;
+            });
+
             const tr = document.createElement('tr');
             tr.setAttribute('data-row', newIdx);
             tr.style.borderBottom = '1px solid #f1f5f9';
@@ -364,7 +377,9 @@
                     <input type="number" step="0.001" min="0" name="ingredients[quantity][]" value="1.000" class="form-control ing-qty" style="font-size:13px;text-align:center;" required>
                 </td>
                 <td style="padding:10px 14px;">
-                    <input type="text" name="ingredients[unit][]" value="g" class="form-control ing-unit" style="font-size:13px;text-align:center;" list="unit-suggestions" placeholder="g">
+                    <select name="ingredients[unit_id][]" class="form-control ing-unit" style="font-size:13px;" required>
+                        ${unitOptionsHTML}
+                    </select>
                 </td>
                 <td style="padding:10px 14px;">
                     <input type="number" step="0.01" min="0" name="ingredients[unit_cost][]" value="0.00" class="form-control ing-cost" style="font-size:13px;text-align:right;" required>
@@ -389,20 +404,83 @@
             const costInput     = tr.querySelector('.ing-cost');
             const delBtn        = tr.querySelector('.btn-del-row');
 
+            // Initialize Select2 on the new row
             $productSelect.select2({
                 placeholder: '-- Custom (No link) --',
                 allowClear: true,
                 width: '100%'
             });
 
+            // Keep track of the current base cost to scale on unit change
+            let baseCost = parseFloat(costInput.value) || 0;
+            // Note: If this is prefilled with a unit that is NOT the base unit, we would need to reverse-calculate.
+            // For simplicity in Recipe create (since they select Product -> we set cost & default unit), we can just set baseCost = product base cost.
+            let productBaseCost = 0;
+
             $productSelect.on('change', function () {
                 const selectedOpt = $(this).find(':selected');
                 const val = $(this).val();
                 if (val && selectedOpt.length) {
                     nameInput.value = selectedOpt.attr('data-name') || '';
-                    unitInput.value = selectedOpt.attr('data-unit') || '';
                     costInput.value = parseFloat(selectedOpt.attr('data-cost') || 0).toFixed(2);
+                    
+                    const pUnitId = selectedOpt.attr('data-unit-id');
+                    const pBaseUnitId = selectedOpt.attr('data-base-unit-id');
+                    
+                    // The cost provided by the product is based on pUnitId.
+                    const productCost = parseFloat(selectedOpt.attr('data-cost') || 0);
+                    const pUnitObj = unitMap[pUnitId];
+                    productBaseCost = productCost;
+                    if (pUnitObj && pUnitObj.base_unit_id) {
+                        if (pUnitObj.operator === '*') {
+                            productBaseCost = productCost / parseFloat(pUnitObj.conversion_rate);
+                        } else {
+                            productBaseCost = productCost * parseFloat(pUnitObj.conversion_rate);
+                        }
+                    }
+                    baseCost = productBaseCost;
+                    
+                    // Filter unit dropdown
+                    Array.from(unitInput.options).forEach(opt => {
+                        if (opt.value === "") return;
+                        const uId = opt.value;
+                        const uBaseId = opt.getAttribute('data-base-unit-id');
+                        
+                        if (uId == pUnitId || uBaseId == pUnitId || (pBaseUnitId && (uId == pBaseUnitId || uBaseId == pBaseUnitId))) {
+                            opt.style.display = '';
+                            opt.disabled = false;
+                        } else {
+                            opt.style.display = 'none';
+                            opt.disabled = true;
+                        }
+                    });
+
+                    if (pUnitId) {
+                        unitInput.value = pUnitId;
+                    }
+                } else {
+                    Array.from(unitInput.options).forEach(opt => {
+                        opt.style.display = '';
+                        opt.disabled = false;
+                    });
                 }
+                recalc();
+            });
+
+            unitInput.addEventListener('change', function() {
+                const selectedUnitObj = unitMap[this.value];
+                if (!selectedUnitObj || baseCost === 0) return;
+
+                let newCost = baseCost;
+                if (selectedUnitObj.base_unit_id) {
+                    if (selectedUnitObj.operator === '*') {
+                        newCost = baseCost * parseFloat(selectedUnitObj.conversion_rate);
+                    } else {
+                        newCost = baseCost / parseFloat(selectedUnitObj.conversion_rate);
+                    }
+                }
+                
+                costInput.value = newCost.toFixed(4); // precision
                 recalc();
             });
 

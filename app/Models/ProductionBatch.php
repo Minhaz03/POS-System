@@ -16,13 +16,20 @@ class ProductionBatch extends Model
         'status',
         'scheduled_at',
         'completed_at',
+        'manufacturing_date',
+        'expiry_date',
+        'wastage_qty',
+        'wastage_notes',
         'created_by',
     ];
 
     protected $casts = [
-        'scheduled_at'  => 'datetime',
-        'completed_at'  => 'datetime',
-        'qty'           => 'decimal:3',
+        'scheduled_at'       => 'datetime',
+        'completed_at'       => 'datetime',
+        'manufacturing_date' => 'date',
+        'expiry_date'        => 'date',
+        'qty'                => 'decimal:3',
+        'wastage_qty'        => 'decimal:3',
     ];
 
     public function recipe()

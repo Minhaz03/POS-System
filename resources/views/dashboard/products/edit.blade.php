@@ -75,6 +75,17 @@
 
                         <hr class="section-divider">
 
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label" for="product_type">Product Type <span style="color:#ef4444;">*</span></label>
+                            <select name="product_type" id="product_type" class="form-control" required>
+                                <option value="ready_made" {{ old('product_type', $product->product_type) == 'ready_made' ? 'selected' : '' }}>Ready Made</option>
+                                <option value="raw_material" {{ old('product_type', $product->product_type) == 'raw_material' ? 'selected' : '' }}>Raw Material</option>
+                                <option value="finished_product" {{ old('product_type', $product->product_type) == 'finished_product' ? 'selected' : '' }}>Finished Product (Bakery)</option>
+                            </select>
+                        </div>
+
+                        <hr class="section-divider">
+
                         <div class="form-grid-2">
                             <div class="form-group" style="margin-bottom:0;">
                                 <label class="form-label" for="category_id">Category</label>
@@ -215,16 +226,7 @@
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
-                    <div class="toggle-row">
-                        <div style="flex:1;">
-                            <div class="toggle-row-label">Bakery Item</div>
-                            <div class="toggle-row-sub">Made from recipes</div>
-                        </div>
-                        <label class="toggle">
-                            <input type="checkbox" name="is_bakery_item" value="1" {{ old('is_bakery_item', $product->is_bakery_item) ? 'checked' : '' }}>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
+
                 </div>
 
                 {{-- Submit Card --}}

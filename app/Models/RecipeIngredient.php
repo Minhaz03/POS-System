@@ -10,8 +10,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'recipe_id',
     'product_id',
     'ingredient_name',
+    'unit_id',
     'quantity',
-    'unit',
+    'net_quantity',
     'unit_cost',
     'subtotal',
     'notes',
@@ -22,7 +23,8 @@ class RecipeIngredient extends Model
     protected function casts(): array
     {
         return [
-            'quantity'   => 'decimal:3',
+            'quantity'     => 'decimal:3',
+            'net_quantity' => 'decimal:3',
             'unit_cost'  => 'decimal:2',
             'subtotal'   => 'decimal:2',
             'sort_order' => 'integer',
@@ -37,5 +39,10 @@ class RecipeIngredient extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(Unit::class);
     }
 }

@@ -12,8 +12,9 @@ class UnitController extends Controller
 {
     public function index(): View
     {
-        $units = Unit::orderBy('name')->paginate(15);
-        return view('dashboard.units.index', compact('units'));
+        $units = Unit::with('baseUnit')->orderBy('name')->paginate(15);
+        $allUnits = Unit::whereNull('base_unit_id')->orderBy('name')->get();
+        return view('dashboard.units.index', compact('units', 'allUnits'));
     }
 
     public function store(Request $request): RedirectResponse|JsonResponse
@@ -21,6 +22,9 @@ class UnitController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:units,name',
             'short_name' => 'required|string|max:20|unique:units,short_name',
+            'base_unit_id' => 'nullable|exists:units,id',
+            'operator' => 'required|in:*,/',
+            'conversion_rate' => 'required|numeric|min:0.0001',
         ]);
 
         $unit = Unit::create($validated);
@@ -41,6 +45,9 @@ class UnitController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:units,name,' . $unit->id,
             'short_name' => 'required|string|max:20|unique:units,short_name,' . $unit->id,
+            'base_unit_id' => 'nullable|exists:units,id',
+            'operator' => 'required|in:*,/',
+            'conversion_rate' => 'required|numeric|min:0.0001',
         ]);
 
         $unit->update($validated);

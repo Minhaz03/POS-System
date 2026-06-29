@@ -31,6 +31,10 @@ class ProductController extends Controller
             $query->where('category_id', $request->category_id);
         }
 
+        if ($request->filled('product_type')) {
+            $query->where('product_type', $request->product_type);
+        }
+
         if ($request->filled('status')) {
             if ($request->status === 'low_stock') {
                 $query->whereColumn('stock_qty', '<=', 'alert_qty');
@@ -77,12 +81,11 @@ class ProductController extends Controller
             'reorder_qty' => 'required|numeric|min:0',
             'is_active' => 'nullable|boolean',
             'is_pos_enabled' => 'nullable|boolean',
-            'is_bakery_item' => 'nullable|boolean',
+            'product_type' => 'required|in:raw_material,ready_made,finished_product',
         ]);
 
         $validated['is_active'] = $request->has('is_active');
         $validated['is_pos_enabled'] = $request->has('is_pos_enabled');
-        $validated['is_bakery_item'] = $request->has('is_bakery_item');
 
         if (empty($validated['sku'])) {
             $nextId = (Product::max('id') ?? 0) + 1;
@@ -133,12 +136,11 @@ class ProductController extends Controller
             'reorder_qty' => 'required|numeric|min:0',
             'is_active' => 'nullable|boolean',
             'is_pos_enabled' => 'nullable|boolean',
-            'is_bakery_item' => 'nullable|boolean',
+            'product_type' => 'required|in:raw_material,ready_made,finished_product',
         ]);
 
         $validated['is_active'] = $request->has('is_active');
         $validated['is_pos_enabled'] = $request->has('is_pos_enabled');
-        $validated['is_bakery_item'] = $request->has('is_bakery_item');
 
         if (empty($validated['sku'])) {
             $validated['sku'] = $product->sku ?? 'SKU-' . str_pad($product->id, 6, '0', STR_PAD_LEFT);

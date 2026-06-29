@@ -22,6 +22,7 @@
                             <th style="padding:12px 20px;">ID</th>
                             <th style="padding:12px 20px;">Unit Name</th>
                             <th style="padding:12px 20px;">Short Symbol</th>
+                            <th style="padding:12px 20px;">Base Unit & Conversion</th>
                             <th style="padding:12px 20px;text-align:center;">Actions</th>
                         </tr>
                     </thead>
@@ -31,6 +32,15 @@
                             <td style="padding:12px 20px;font-weight:600;color:#64748b;">#{{ $unit->id }}</td>
                             <td style="padding:12px 20px;font-weight:700;color:#0f172a;">{{ $unit->name }}</td>
                             <td style="padding:12px 20px;font-family:monospace;color:#6366f1;font-weight:600;">{{ $unit->short_name }}</td>
+                            <td style="padding:12px 20px;color:#475569;">
+                                @if($unit->baseUnit)
+                                    <span style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:12px;font-weight:600;display:inline-block;">
+                                        = {{ floatval($unit->conversion_rate) }} {{ $unit->baseUnit->short_name }} ({{ $unit->operator }})
+                                    </span>
+                                @else
+                                    <span style="color:#94a3b8;font-size:12px;font-weight:600;">Base Unit</span>
+                                @endif
+                            </td>
                             <td style="padding:12px 20px;text-align:center;">
                                 <form method="POST" action="{{ route('dashboard.units.destroy', $unit) }}" onsubmit="return confirm('Are you sure you want to delete this unit?')" style="margin:0;display:inline;">
                                     @csrf
@@ -77,6 +87,33 @@
                         @error('short_name')
                             <span style="color:#ef4444;font-size:12px;margin-top:4px;display:block;">{{ $message }}</span>
                         @enderror
+                    </div>
+
+                    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin-bottom:16px;">
+                        <div class="form-group">
+                            <label class="form-label" for="base_unit_id">Base Unit (Optional)</label>
+                            <select name="base_unit_id" id="base_unit_id" class="form-control">
+                                <option value="">None (This is a Base Unit)</option>
+                                @foreach($allUnits as $u)
+                                    <option value="{{ $u->id }}">{{ $u->name }}</option>
+                                @endforeach
+                            </select>
+                            <small style="color:#64748b;font-size:12px;">Leave blank if this is a primary unit (e.g., Gram). Select a base if this is a derived unit (e.g., Kilogram derived from Gram).</small>
+                        </div>
+
+                        <div style="display:grid;grid-template-columns:1fr 2fr;gap:16px;">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label class="form-label" for="operator">Operator</label>
+                                <select name="operator" id="operator" class="form-control">
+                                    <option value="*">Multiply (*)</option>
+                                    <option value="/">Divide (/)</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label class="form-label" for="conversion_rate">Conversion Rate</label>
+                                <input type="number" step="0.0001" name="conversion_rate" id="conversion_rate" class="form-control" value="1" required>
+                            </div>
+                        </div>
                     </div>
 
                     <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:12px;">

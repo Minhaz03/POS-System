@@ -25,7 +25,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'reorder_qty',
     'is_active',
     'is_pos_enabled',
-    'is_bakery_item',
+    'product_type',
 ])]
 class Product extends Model
 {
@@ -42,7 +42,6 @@ class Product extends Model
             'reorder_qty' => 'decimal:3',
             'is_active' => 'boolean',
             'is_pos_enabled' => 'boolean',
-            'is_bakery_item' => 'boolean',
         ];
     }
 

@@ -14,10 +14,10 @@ class SettingsSeeder extends Seeder
     {
         $defaults = [
             // Business Info
-            ['key' => 'business_name',    'value' => 'My POS Business', 'type' => 'string',  'group' => 'general'],
-            ['key' => 'business_address', 'value' => '',                'type' => 'string',  'group' => 'general'],
-            ['key' => 'business_phone',   'value' => '',                'type' => 'string',  'group' => 'general'],
-            ['key' => 'business_email',   'value' => '',                'type' => 'string',  'group' => 'general'],
+            ['key' => 'business_name',    'value' => 'Dhaka Bakery & Sweets', 'type' => 'string',  'group' => 'general'],
+            ['key' => 'business_address', 'value' => 'Gulshan, Dhaka, Bangladesh', 'type' => 'string',  'group' => 'general'],
+            ['key' => 'business_phone',   'value' => '+8801700000000',     'type' => 'string',  'group' => 'general'],
+            ['key' => 'business_email',   'value' => 'contact@dhakabakery.com.bd', 'type' => 'string',  'group' => 'general'],
             ['key' => 'currency_code',    'value' => 'BDT',             'type' => 'string',  'group' => 'general'],
             ['key' => 'currency_symbol',  'value' => '৳',              'type' => 'string',  'group' => 'general'],
 

@@ -73,6 +73,12 @@
                         <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
                     @endforeach
                 </select>
+                <select name="product_type" class="form-control" style="width:160px;cursor:pointer;" onchange="this.form.submit()">
+                    <option value="">All Types</option>
+                    <option value="raw_material" {{ request('product_type') === 'raw_material' ? 'selected' : '' }}>Raw Material</option>
+                    <option value="ready_made" {{ request('product_type') === 'ready_made' ? 'selected' : '' }}>Ready Made</option>
+                    <option value="finished_product" {{ request('product_type') === 'finished_product' ? 'selected' : '' }}>Finished Product</option>
+                </select>
                 <select name="status" class="form-control" style="width:160px;cursor:pointer;" onchange="this.form.submit()">
                     <option value="">Stock Status</option>
                     <option value="in_stock" {{ request('status') === 'in_stock' ? 'selected' : '' }}>In Stock</option>
@@ -80,7 +86,7 @@
                     <option value="out_of_stock" {{ request('status') === 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
                 </select>
                 <button type="submit" class="btn btn-outline btn-sm">Filter</button>
-                @if(request()->anyFilled(['search', 'category_id', 'status']))
+                @if(request()->anyFilled(['search', 'category_id', 'product_type', 'status']))
                     <a href="{{ route('dashboard.products') }}" class="btn btn-outline btn-sm" style="color:#ef4444;border-color:#fecaca;">Clear</a>
                 @endif
             </form>
@@ -97,6 +103,7 @@
                         <th style="padding:16px 20px; white-space: normal; vertical-align: middle; text-align: center; overflow-wrap: break-word;">SKU</th>
                         <th style="padding:16px 20px; white-space: normal; vertical-align: middle; text-align: center; overflow-wrap: break-word;">Barcode Scan QR</th>
                         <th style="padding:16px 20px; white-space: normal; vertical-align: middle; text-align: center; overflow-wrap: break-word;">Category</th>
+                        <th style="padding:16px 20px; white-space: normal; vertical-align: middle; text-align: center; overflow-wrap: break-word;">Type</th>
                         <th style="padding:16px 20px; white-space: normal; vertical-align: middle; text-align: center; overflow-wrap: break-word;">Brand</th>
                         <th style="padding:16px 20px; white-space: normal; vertical-align: middle; text-align: right; overflow-wrap: break-word;">Cost Price</th>
                         <th style="padding:16px 20px; white-space: normal; vertical-align: middle; text-align: right; overflow-wrap: break-word;">Sale Price</th>
@@ -119,9 +126,6 @@
                                 @endif
                                 <div>
                                     <span style="font-weight:700;color:#0f172a;display:block;">{{ $product->name }}</span>
-                                    @if($product->is_bakery_item)
-                                        <span style="background:#e0f2fe;color:#0369a1;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600;display:inline-block;margin-top:2px;">Bakery Item</span>
-                                    @endif
                                 </div>
                             </div>
                         </td>
@@ -139,6 +143,17 @@
                             @endif
                         </td>
                         <td style="padding:14px 20px; text-align: center; vertical-align: middle;">{{ $product->category?->name ?? 'N/A' }}</td>
+                        <td style="padding:14px 20px; text-align: center; vertical-align: middle;">
+                            @if($product->product_type === 'raw_material')
+                                <span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">Raw Material</span>
+                            @elseif($product->product_type === 'ready_made')
+                                <span style="background:#e0e7ff;color:#4f46e5;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">Ready Made</span>
+                            @elseif($product->product_type === 'finished_product')
+                                <span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">Finished Product</span>
+                            @else
+                                <span style="color:#94a3b8;font-size:12px;">N/A</span>
+                            @endif
+                        </td>
                         <td style="padding:14px 20px; text-align: center; vertical-align: middle;">{{ $product->brand?->name ?? 'N/A' }}</td>
                         <td style="padding:14px 20px; text-align: right; vertical-align: middle;">৳ {{ number_format($product->cost_price, 2) }}</td>
                         <td style="padding:14px 20px; text-align: right; vertical-align: middle; font-weight: 700; color: #0f172a;">৳ {{ number_format($product->sale_price, 2) }}</td>

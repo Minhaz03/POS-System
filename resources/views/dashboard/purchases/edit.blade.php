@@ -128,6 +128,8 @@
                                         <option value="{{ $product->id }}"
                                             data-cost="{{ $product->cost_price }}"
                                             data-unit="{{ $product->unit?->short_name ?? 'pcs' }}"
+                                            data-unit-id="{{ $product->unit_id }}"
+                                            data-base-unit-id="{{ $product->unit?->base_unit_id }}"
                                             data-sku="{{ $product->sku }}"
                                             data-name="{{ $product->name }}">
                                             {{ $product->name }} ({{ $product->sku }})
@@ -243,11 +245,18 @@
             'product_name' => $item->product?->name ?? 'Unknown Product',
             'product_sku'  => $item->product?->sku ?? '-',
             'product_unit' => $item->product?->unit?->short_name ?? 'pcs',
+            'product_unit_id' => $item->product?->unit_id,
+            'product_base_unit_id' => $item->product?->unit?->base_unit_id,
+            'selected_unit_id' => $item->unit_id,
             'quantity'     => (float) $item->quantity,
             'unit_cost'    => (float) $item->unit_cost,
         ]));
 
         $(document).ready(function() {
+            const allUnits = @json($allUnits);
+            const unitMap = {};
+            allUnits.forEach(u => unitMap[u.id] = u);
+
             // Initialize Select2 dropdowns
             $('#supplier_id').select2({
                 placeholder: 'Select Supplier',
@@ -276,7 +285,7 @@
 
             // Pre-populate existing items
             existingItems.forEach(function(item) {
-                addRow(item.product_id, item.product_name, item.product_sku, item.product_unit, item.unit_cost, item.quantity);
+                addRow(item.product_id, item.product_name, item.product_sku, item.product_unit, item.product_unit_id, item.product_base_unit_id, item.unit_cost, item.quantity, item.selected_unit_id);
             });
 
             // Add Product button
@@ -296,13 +305,45 @@
                     selectedOpt.getAttribute('data-name'),
                     selectedOpt.getAttribute('data-sku'),
                     selectedOpt.getAttribute('data-unit'),
+                    selectedOpt.getAttribute('data-unit-id'),
+                    selectedOpt.getAttribute('data-base-unit-id'),
                     parseFloat(selectedOpt.getAttribute('data-cost')) || 0,
-                    1
+                    1,
+                    selectedOpt.getAttribute('data-unit-id') // default unit
                 );
                 $('#product_selector').val('').trigger('change');
             });
 
-            function addRow(productId, productName, productSku, productUnit, unitCost, quantity) {
+            function addRow(productId, productName, productSku, productUnit, productUnitId, productBaseUnitId, unitCost, quantity, selectedUnitId) {
+                // Calculate product's base cost
+                const pUnitObj = unitMap[productUnitId];
+                let baseCost = unitCost;
+                // We use unitCost here because it's passed directly as the cost for that specific row/item (whether newly added or populated). Wait, actually for a new row it's the productCost.
+                // It's safer to recalculate from product base cost if we know it.
+                // But for pre-populated items, unitCost is the cost for the *selected unit*.
+                // Let's normalize it to base unit cost first.
+                const selectedUnitObj = unitMap[selectedUnitId];
+                if (selectedUnitObj && selectedUnitObj.base_unit_id) {
+                    if (selectedUnitObj.operator === '*') {
+                        baseCost = unitCost / parseFloat(selectedUnitObj.conversion_rate);
+                    } else {
+                        baseCost = unitCost * parseFloat(selectedUnitObj.conversion_rate);
+                    }
+                }
+
+                // Generate unit options
+                let unitOptions = '';
+                allUnits.forEach(u => {
+                    if (u.id == productUnitId || u.base_unit_id == productUnitId || (productBaseUnitId && (u.id == productBaseUnitId || u.base_unit_id == productBaseUnitId))) {
+                        let isSelected = (u.id == selectedUnitId) ? 'selected' : '';
+                        unitOptions += `<option value="${u.id}" ${isSelected}>${u.short_name}</option>`;
+                    }
+                });
+                
+                if (!unitOptions) {
+                    unitOptions = `<option value="${productUnitId || ''}" selected>${productUnit}</option>`;
+                }
+
                 const tr = document.createElement('tr');
                 tr.setAttribute('id', `row-${rowIndex}`);
                 tr.style.borderBottom = '1px solid #f1f5f9';
@@ -316,7 +357,9 @@
                     <td style="padding:12px 16px;text-align:center;">
                         <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
                             <input type="number" step="0.001" min="0.001" name="items[${rowIndex}][quantity]" value="${parseFloat(quantity).toFixed(3)}" class="form-control item-qty" style="width:90px;padding:6px;text-align:center;" required>
-                            <span style="font-size:12px;color:#64748b;font-weight:600;min-width:30px;">${productUnit}</span>
+                            <select name="items[${rowIndex}][unit_id]" class="form-control item-unit" style="width:70px;padding:6px;font-size:13px;" required>
+                                ${unitOptions}
+                            </select>
                         </div>
                     </td>
                     <td style="padding:12px 16px;text-align:right;">
@@ -333,7 +376,28 @@
                 itemsTbody.appendChild(tr);
 
                 tr.querySelector('.item-qty').addEventListener('input', calculateTotals);
-                tr.querySelector('.item-cost').addEventListener('input', calculateTotals);
+                
+                const costInput = tr.querySelector('.item-cost');
+                costInput.addEventListener('input', calculateTotals);
+                
+                const unitSelect = tr.querySelector('.item-unit');
+                unitSelect.addEventListener('change', function() {
+                    const selectedUObj = unitMap[this.value];
+                    if (!selectedUObj) return;
+
+                    let newCost = baseCost;
+                    if (selectedUObj.base_unit_id) {
+                        if (selectedUObj.operator === '*') {
+                            newCost = baseCost * parseFloat(selectedUObj.conversion_rate);
+                        } else {
+                            newCost = baseCost / parseFloat(selectedUObj.conversion_rate);
+                        }
+                    }
+                    
+                    costInput.value = newCost.toFixed(2);
+                    calculateTotals();
+                });
+
                 tr.querySelector('.btn-remove-row').addEventListener('click', function() {
                     tr.remove();
                     calculateTotals();

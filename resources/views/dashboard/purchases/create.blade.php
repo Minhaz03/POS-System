@@ -117,7 +117,7 @@
                                 <select id="product_selector" class="form-control select2" style="cursor:pointer;width:100%;">
                                     <option value="">-- Choose Product --</option>
                                     @foreach($products as $product)
-                                        <option value="{{ $product->id }}" data-cost="{{ $product->cost_price }}" data-unit="{{ $product->unit?->short_name ?? 'pcs' }}" data-sku="{{ $product->sku }}">
+                                        <option value="{{ $product->id }}" data-cost="{{ $product->cost_price }}" data-unit="{{ $product->unit?->short_name ?? 'pcs' }}" data-unit-id="{{ $product->unit_id }}" data-base-unit-id="{{ $product->unit?->base_unit_id }}" data-sku="{{ $product->sku }}">
                                             {{ $product->name }} ({{ $product->sku }}) - Current Stock: {{ floatval($product->stock_qty) }} {{ $product->unit?->short_name ?? 'pcs' }}
                                         </option>
                                     @endforeach
@@ -230,6 +230,10 @@
 
     <script>
         $(document).ready(function() {
+            const allUnits = @json($allUnits);
+            const unitMap = {};
+            allUnits.forEach(u => unitMap[u.id] = u);
+
             // Initialize Select2 dropdowns
             $('#supplier_id').select2({
                 placeholder: 'Select Supplier',
@@ -269,6 +273,8 @@
                 const productName = selectedOpt.text.split(' (')[0];
                 const productSku = selectedOpt.getAttribute('data-sku');
                 const productUnit = selectedOpt.getAttribute('data-unit');
+                const productUnitId = selectedOpt.getAttribute('data-unit-id');
+                const productBaseUnitId = selectedOpt.getAttribute('data-base-unit-id');
                 const productCost = parseFloat(selectedOpt.getAttribute('data-cost')) || 0;
 
                 // Check if already in list
@@ -281,6 +287,32 @@
                 // Remove empty row if exists
                 if (emptyRow) {
                     emptyRow.style.display = 'none';
+                }
+
+                // Calculate product's base cost
+                const pUnitObj = unitMap[productUnitId];
+                let baseCost = productCost;
+                if (pUnitObj && pUnitObj.base_unit_id) {
+                    if (pUnitObj.operator === '*') {
+                        baseCost = productCost / parseFloat(pUnitObj.conversion_rate);
+                    } else {
+                        baseCost = productCost * parseFloat(pUnitObj.conversion_rate);
+                    }
+                }
+
+                // Generate unit options
+                let unitOptions = '';
+                allUnits.forEach(u => {
+                    // Include if it's the exact same unit, OR they share a base unit, OR one is the base unit of the other
+                    if (u.id == productUnitId || u.base_unit_id == productUnitId || (productBaseUnitId && (u.id == productBaseUnitId || u.base_unit_id == productBaseUnitId))) {
+                        let isSelected = (u.id == productUnitId) ? 'selected' : '';
+                        unitOptions += `<option value="${u.id}" ${isSelected}>${u.short_name}</option>`;
+                    }
+                });
+                
+                // If no matching unit found, fallback to basic option
+                if (!unitOptions) {
+                    unitOptions = `<option value="${productUnitId || ''}" selected>${productUnit}</option>`;
                 }
 
                 // Add row
@@ -296,7 +328,9 @@
                     <td style="padding:12px 16px;text-align:center;">
                         <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
                             <input type="number" step="0.001" min="0.001" name="items[${rowIndex}][quantity]" value="1.000" class="form-control item-qty" style="width:90px;padding:6px;text-align:center;" required>
-                            <span style="font-size:12px;color:#64748b;font-weight:600;min-width:30px;text-align:left;">${productUnit}</span>
+                            <select name="items[${rowIndex}][unit_id]" class="form-control item-unit" style="width:70px;padding:6px;font-size:13px;" required>
+                                ${unitOptions}
+                            </select>
                         </div>
                     </td>
                     <td style="padding:12px 16px;text-align:right;">
@@ -315,7 +349,25 @@
                 // Bind events for row inputs
                 const qtyInput = tr.querySelector('.item-qty');
                 const costInput = tr.querySelector('.item-cost');
+                const unitSelect = tr.querySelector('.item-unit');
                 const removeBtn = tr.querySelector('.btn-remove-row');
+
+                unitSelect.addEventListener('change', function() {
+                    const selectedUnitObj = unitMap[this.value];
+                    if (!selectedUnitObj) return;
+
+                    let newCost = baseCost;
+                    if (selectedUnitObj.base_unit_id) {
+                        if (selectedUnitObj.operator === '*') {
+                            newCost = baseCost * parseFloat(selectedUnitObj.conversion_rate);
+                        } else {
+                            newCost = baseCost / parseFloat(selectedUnitObj.conversion_rate);
+                        }
+                    }
+                    
+                    costInput.value = newCost.toFixed(2);
+                    calculateTotals();
+                });
 
                 qtyInput.addEventListener('input', calculateTotals);
                 costInput.addEventListener('input', calculateTotals);
