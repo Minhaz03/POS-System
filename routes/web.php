@@ -155,6 +155,16 @@ Route::middleware(['auth', 'verified'])->prefix('dashboard')->name('dashboard.')
     Route::get('/Custom-Orders/{order}/print', [CustomOrderController::class, 'print'])->name('custom-orders.print');
     Route::patch('/Custom-Orders/{order}/cancel', [CustomOrderController::class, 'cancel'])->name('custom-orders.cancel');
     Route::get('/Analytics', [AnalyticsController::class, 'analytics'])->name('analytics');
+    
+    // Reports
+    Route::prefix('Reports')->name('reports.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ReportController::class, 'index'])->name('index');
+        Route::get('/sales', [\App\Http\Controllers\ReportController::class, 'salesReport'])->name('sales');
+        Route::get('/purchases', [\App\Http\Controllers\ReportController::class, 'purchasesReport'])->name('purchases');
+        Route::get('/stock', [\App\Http\Controllers\ReportController::class, 'stockReport'])->name('stock');
+        Route::get('/production', [\App\Http\Controllers\ReportController::class, 'productionReport'])->name('production');
+        Route::get('/profit-loss', [\App\Http\Controllers\ReportController::class, 'profitLossReport'])->name('profit-loss');
+    });
 });
 
 Route::middleware('auth')->group(function () {
