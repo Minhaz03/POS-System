@@ -16,7 +16,7 @@ class AnalyticsController extends Controller
      */
     public function analytics(): View
     {
-        $totalSales = Sale::sum('total_amount');
+        $totalSales = Sale::sum('grand_total');
         $ordersCount = Sale::count();
         $avgOrderValue = $ordersCount > 0 ? $totalSales / $ordersCount : 0;
 
@@ -41,7 +41,7 @@ class AnalyticsController extends Controller
         for ($i = 6; $i >= 0; $i--) {
             $date = Carbon::today()->subDays($i);
             $labels[] = $date->format('D'); // Mon, Tue, etc.
-            $daySales = Sale::whereDate('created_at', $date)->sum('total_amount');
+            $daySales = Sale::whereDate('created_at', $date)->sum('grand_total');
             $data[] = (float) $daySales;
         }
 

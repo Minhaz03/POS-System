@@ -13,12 +13,15 @@ return new class extends Migration
     {
         Schema::create('production_batches', function (Blueprint $table) {
             $table->id();
-            $table->string('batch_number')->unique();
+            $table->string('batch_code')->unique();
             $table->foreignId('recipe_id')->constrained('recipes')->onDelete('cascade');
-            $table->decimal('qty', 10, 2);
-            $table->string('status')->default('Scheduled'); // Scheduled, In Progress, Completed, Cancelled
-            $table->dateTime('production_date');
+            $table->decimal('qty', 12, 3);
+            $table->enum('status', ['Scheduled', 'In Progress', 'Completed', 'Cancelled'])->default('Scheduled');
+            $table->dateTime('scheduled_at');
+            $table->dateTime('completed_at')->nullable();
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

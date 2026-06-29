@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\ModuleController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PosController;
@@ -173,6 +175,20 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified'])->group(
         Route::post('/modules/infrastructure/{module}', [ModuleController::class, 'toggleInfrastructure'])->name('modules.toggle-infrastructure');
         Route::post('/modules/business-type', [ModuleController::class, 'setBusinessType'])->name('modules.set-business-type');
     });
+
+    // ── User Management ──
+    Route::get('/users',              [UserController::class, 'index'])->name('users.index');
+    Route::post('/users',             [UserController::class, 'store'])->name('users.store');
+    Route::put('/users/{user}',       [UserController::class, 'update'])->name('users.update');
+    Route::put('/users/{user}/roles', [UserController::class, 'assignRoles'])->name('users.assign-roles');
+    Route::delete('/users/{user}',    [UserController::class, 'destroy'])->name('users.destroy');
+
+    // ── Roles & Permissions ──
+    Route::get('/roles',                          [RoleController::class, 'index'])->name('roles.index');
+    Route::post('/roles',                         [RoleController::class, 'store'])->name('roles.store');
+    Route::put('/roles/{role}',                   [RoleController::class, 'update'])->name('roles.update');
+    Route::put('/roles/{role}/permissions',       [RoleController::class, 'syncPermissions'])->name('roles.sync-permissions');
+    Route::delete('/roles/{role}',                [RoleController::class, 'destroy'])->name('roles.destroy');
 });
 
 require __DIR__.'/auth.php';

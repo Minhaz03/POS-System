@@ -22,32 +22,35 @@ class RolesAndPermissionsSeeder extends Seeder
         $permissions = [
             // Core Auth / Users
             'users.view', 'users.create', 'users.edit', 'users.delete',
-            
+
+            // Roles & Permissions
+            'roles.view', 'roles.create', 'roles.edit', 'roles.delete',
+
             // Core Inventory & Products
             'products.view', 'products.create', 'products.edit', 'products.delete',
             'categories.manage', 'units.manage', 'taxes.manage', 'brands.manage',
-            
+
             // Stock Management
             'stock.view', 'stock.adjust', 'stock.alerts',
-            
+
             // Suppliers & Purchases
             'suppliers.manage', 'purchases.manage', 'purchases.create', 'purchases.view',
-            
+
             // POS & Sales
             'pos.access', 'pos.sell', 'customers.manage', 'sales.view', 'sales.return',
-            
+
             // Modules & Settings (Super Admin only)
-            'settings.manage', 'modules.manage', 'activity.logs',
-            
+            'settings.manage', 'settings.view', 'modules.manage', 'activity.logs',
+
             // Reports
             'reports.view', 'reports.export',
-            
+
             // Warehouse Module (Optional)
             'warehouse.view', 'warehouse.manage', 'warehouse.transfer',
-            
+
             // Branch Module (Optional)
             'branch.view', 'branch.manage',
-            
+
             // Bakery Module (Optional)
             'recipes.manage', 'production.manage', 'production.create', 'production.view',
             'supply.orders.manage', 'custom.orders.manage',

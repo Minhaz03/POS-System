@@ -35,7 +35,7 @@
                             </div>
                             <div class="form-group" style="margin-bottom:0;">
                                 <label class="form-label">Production Schedule Date <span style="color:var(--danger)">*</span></label>
-                                <input type="datetime-local" name="production_date" class="form-control" value="{{ now()->format('Y-m-d\TH:i') }}" required>
+                                <input type="datetime-local" name="scheduled_at" class="form-control" value="{{ now()->format('Y-m-d\TH:i') }}" required>
                             </div>
                         </div>
                         <div style="padding:16px 20px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:10px;">

@@ -295,13 +295,16 @@
             </div>
 
             <div class="nav-section-label">Administration</div>
-            @can('users.view')
             <div class="nav-item">
-                <a href="#" class="nav-link {{ request()->routeIs('admin.users*') ? 'active' : '' }}">
+                <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users*') ? 'active' : '' }}">
                     <i class="bi bi-people-fill nav-icon"></i> Users
                 </a>
             </div>
-            @endcan
+            <div class="nav-item">
+                <a href="{{ route('admin.roles.index') }}" class="nav-link {{ request()->routeIs('admin.roles*') ? 'active' : '' }}">
+                    <i class="bi bi-shield-lock nav-icon"></i> Roles & Permissions
+                </a>
+            </div>
             <div class="nav-item">
                 <a href="{{ route('admin.settings.index') }}" class="nav-link {{ request()->routeIs('admin.settings*') ? 'active' : '' }}">
                     <i class="bi bi-gear nav-icon"></i> Settings
