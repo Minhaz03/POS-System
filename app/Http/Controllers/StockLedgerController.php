@@ -13,11 +13,27 @@ class StockLedgerController extends Controller
     /**
      * Display Stock Ledger.
      */
-    public function stockLedger(): View
+    public function stockLedger(Request $request): View
     {
-        $ledger = StockLedger::with(['product', 'user'])
-            ->latest()
-            ->get();
+        $query = StockLedger::with(['product', 'user']);
+
+        if ($request->filled('product_id')) {
+            $query->where('product_id', $request->product_id);
+        }
+
+        if ($request->filled('type')) {
+            $query->where('type', 'like', '%' . $request->type . '%');
+        }
+
+        if ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        }
+
+        if ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->end_date);
+        }
+
+        $ledger = $query->orderBy('id', 'desc')->paginate(15)->withQueryString();
 
         $products = Product::orderBy('name')->get();
 
@@ -89,7 +105,7 @@ class StockLedgerController extends Controller
             fputcsv($file, ['Ref ID', 'Product SKU', 'Product Name', 'Movement Type', 'Quantity', 'Updated By', 'Date & Time', 'Notes']);
 
             // Fetch ledger entries
-            $entries = StockLedger::with(['product', 'user'])->latest()->get();
+            $entries = StockLedger::with(['product', 'user'])->orderBy('id', 'desc')->get();
 
             foreach ($entries as $row) {
                 fputcsv($file, [

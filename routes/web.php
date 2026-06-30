@@ -154,6 +154,7 @@ Route::middleware(['auth', 'verified'])->prefix('dashboard')->name('dashboard.')
     Route::post('/Custom-Orders', [CustomOrderController::class, 'store'])->name('custom-orders.store');
     Route::get('/Custom-Orders/{order}/print', [CustomOrderController::class, 'print'])->name('custom-orders.print');
     Route::patch('/Custom-Orders/{order}/cancel', [CustomOrderController::class, 'cancel'])->name('custom-orders.cancel');
+    Route::patch('/Custom-Orders/{order}/status', [CustomOrderController::class, 'updateStatus'])->name('custom-orders.status');
     Route::get('/Analytics', [AnalyticsController::class, 'analytics'])->name('analytics');
     
     // Reports

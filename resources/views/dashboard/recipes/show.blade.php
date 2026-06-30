@@ -102,7 +102,7 @@
                                         <span style="font-size:11px;color:#94a3b8;display:block;font-style:italic;">{{ $ingredient->notes }}</span>
                                     @endif
                                 </td>
-                                <td style="padding:12px 20px;text-align:center;font-weight:600;">{{ number_format($ingredient->quantity, 3) }} <span style="color:#64748b;font-size:12px;">{{ $ingredient->unit }}</span></td>
+                                <td style="padding:12px 20px;text-align:center;font-weight:600;">{{ number_format($ingredient->quantity, 3) }} <span style="color:#64748b;font-size:12px;">{{ $ingredient->unit->short_name ?? $ingredient->unit->name ?? '' }}</span></td>
                                 <td style="padding:12px 20px;text-align:right;">৳{{ number_format($ingredient->unit_cost, 2) }}</td>
                                 <td style="padding:12px 20px;text-align:right;font-weight:700;color:#0f172a;">৳{{ number_format($ingredient->subtotal, 2) }}</td>
                             </tr>

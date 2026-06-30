@@ -1,6 +1,6 @@
 <x-layouts.admin title="Stock Report">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
-        <a href="{{ route('reports.index') }}" class="btn-topbar" style="padding:8px 12px;text-decoration:none;"><i class="bi bi-arrow-left"></i> Back</a>
+        <a href="{{ route('dashboard.reports.index') }}" class="btn-topbar" style="padding:8px 12px;text-decoration:none;"><i class="bi bi-arrow-left"></i> Back</a>
         <div>
             <h2 style="font-size:22px;font-weight:800;color:#0f172a;margin:0;">Stock Report</h2>
             <p style="font-size:13.5px;color:#64748b;margin:4px 0 0 0;">View current inventory levels and valuations.</p>
@@ -10,7 +10,7 @@
     <!-- Filters -->
     <div class="card" style="margin-bottom:24px;">
         <div class="card-body">
-            <form method="GET" action="{{ route('reports.stock') }}" style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;">
+            <form method="GET" action="{{ route('dashboard.reports.stock') }}" style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;">
                 <div class="form-group" style="margin:0;flex:1;min-width:200px;">
                     <label class="form-label" for="product_type">Product Type</label>
                     <select name="product_type" id="product_type" class="form-control">
@@ -31,7 +31,7 @@
                 </div>
                 <div style="display:flex;gap:10px;">
                     <button type="submit" class="btn btn-primary"><i class="bi bi-filter"></i> Filter</button>
-                    <a href="{{ route('reports.stock') }}" class="btn btn-outline">Clear</a>
+                    <a href="{{ route('dashboard.reports.stock') }}" class="btn btn-outline">Clear</a>
                     <button type="button" onclick="window.print()" class="btn btn-outline"><i class="bi bi-printer"></i> Print</button>
                 </div>
             </form>

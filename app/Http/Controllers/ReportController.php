@@ -96,13 +96,13 @@ class ReportController extends Controller
 
     public function productionReport(Request $request)
     {
-        $query = ProductionBatch::with('recipe.product')->orderBy('production_date', 'desc');
+        $query = ProductionBatch::with('recipe.product')->orderBy('created_at', 'desc');
 
         if ($request->filled('start_date')) {
-            $query->whereDate('production_date', '>=', $request->start_date);
+            $query->whereDate('created_at', '>=', $request->start_date);
         }
         if ($request->filled('end_date')) {
-            $query->whereDate('production_date', '<=', $request->end_date);
+            $query->whereDate('created_at', '<=', $request->end_date);
         }
         if ($request->filled('status')) {
             $query->where('status', $request->status);

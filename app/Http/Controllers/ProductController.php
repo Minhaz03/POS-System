@@ -101,7 +101,17 @@ class ProductController extends Controller
             $validated['image'] = $path;
         }
 
-        Product::create($validated);
+        $product = Product::create($validated);
+
+        if ($product->stock_qty > 0) {
+            \App\Models\StockLedger::create([
+                'product_id' => $product->id,
+                'type'       => 'Initial Stock (+)',
+                'qty'        => $product->stock_qty,
+                'user_id'    => auth()->id(),
+                'notes'      => 'Product created with initial stock',
+            ]);
+        }
 
         return redirect()->route('dashboard.products')->with('success', 'Product created successfully!');
     }
@@ -152,13 +162,27 @@ class ProductController extends Controller
 
         if ($request->hasFile('image')) {
             if ($product->image) {
-                Storage::disk('public')->delete($product->image);
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($product->image);
             }
             $path = $request->file('image')->store('products', 'public');
             $validated['image'] = $path;
         }
 
+        $oldStock = $product->stock_qty;
         $product->update($validated);
+        $newStock = $product->stock_qty;
+
+        if ($oldStock != $newStock) {
+            $diff = $newStock - $oldStock;
+            $type = $diff > 0 ? 'Manual Edit (+)' : 'Manual Edit (-)';
+            \App\Models\StockLedger::create([
+                'product_id' => $product->id,
+                'type'       => $type,
+                'qty'        => $diff,
+                'user_id'    => auth()->id(),
+                'notes'      => 'Product stock manually updated from ' . $oldStock . ' to ' . $newStock,
+            ]);
+        }
 
         return redirect()->route('dashboard.products')->with('success', 'Product updated successfully!');
     }
@@ -166,8 +190,19 @@ class ProductController extends Controller
     public function destroy(Product $product): RedirectResponse
     {
         if ($product->image) {
-            Storage::disk('public')->delete($product->image);
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($product->image);
         }
+
+        if ($product->stock_qty > 0) {
+            \App\Models\StockLedger::create([
+                'product_id' => $product->id,
+                'type'       => 'Product Deleted (-)',
+                'qty'        => -$product->stock_qty,
+                'user_id'    => auth()->id(),
+                'notes'      => 'Product deleted, stock removed',
+            ]);
+        }
+
         $product->delete();
 
         return redirect()->route('dashboard.products')->with('success', 'Product deleted successfully!');
@@ -176,18 +211,34 @@ class ProductController extends Controller
     public function show(Product $product): View
     {
         $product->load(['category', 'brand', 'unit', 'tax']);
-        return view('dashboard.products.show', compact('product'));
+        $stockLedger = \App\Models\StockLedger::with('user')->where('product_id', $product->id)->orderBy('id', 'desc')->paginate(10);
+        return view('dashboard.products.show', compact('product', 'stockLedger'));
     }
 
     public function toggleStock(Product $product): RedirectResponse
     {
+        $oldStock = $product->stock_qty;
         if ($product->stock_qty > 0) {
             $product->update(['stock_qty' => 0]);
             $message = 'Product marked as Out of Stock.';
+            \App\Models\StockLedger::create([
+                'product_id' => $product->id,
+                'type'       => 'Stock Toggled (-)',
+                'qty'        => -$oldStock,
+                'user_id'    => auth()->id(),
+                'notes'      => 'Product marked as Out of Stock via toggle',
+            ]);
         } else {
             $newQty = max(10, $product->alert_qty + 5);
             $product->update(['stock_qty' => $newQty]);
             $message = 'Product marked as In Stock.';
+            \App\Models\StockLedger::create([
+                'product_id' => $product->id,
+                'type'       => 'Stock Toggled (+)',
+                'qty'        => $newQty,
+                'user_id'    => auth()->id(),
+                'notes'      => 'Product marked as In Stock via toggle',
+            ]);
         }
 
         return redirect()->back()->with('success', $message);

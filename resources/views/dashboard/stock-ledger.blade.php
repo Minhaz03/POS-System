@@ -1,8 +1,10 @@
 <x-layouts.admin title="Stock Ledger">
-    <!-- Select2 Assets & Custom Styling -->
+    <!-- Select2 & Flatpickr Assets -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
 
     <style>
         [x-cloak] {
@@ -95,6 +97,51 @@
             </div>
         </div>
 
+        <!-- Filter Form -->
+        <div class="card" style="margin-bottom:24px;">
+            <div class="card-body">
+                <form action="{{ route('dashboard.stock-ledger') }}" method="GET" style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;">
+                    <div class="form-group" style="margin:0;flex:2;min-width:200px;">
+                        <label class="form-label" style="font-size:13px;font-weight:600;margin-bottom:6px;display:block;">Product</label>
+                        <select name="product_id" class="form-control select2-filter" style="height:44px;border-radius:10px;width:100%;">
+                            <option value=""></option>
+                            @foreach ($products as $p)
+                                <option value="{{ $p->id }}" {{ request('product_id') == $p->id ? 'selected' : '' }}>{{ $p->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin:0;flex:1.5;min-width:150px;">
+                        <label class="form-label" style="font-size:13px;font-weight:600;margin-bottom:6px;display:block;">Movement Type</label>
+                        <select name="type" class="form-control" style="height:44px;border-radius:10px;width:100%;">
+                            <option value="">All Types</option>
+                            <option value="Initial Stock" {{ request('type') == 'Initial Stock' ? 'selected' : '' }}>Initial Stock</option>
+                            <option value="Manual Edit" {{ request('type') == 'Manual Edit' ? 'selected' : '' }}>Manual Edit</option>
+                            <option value="Adjustment" {{ request('type') == 'Adjustment' ? 'selected' : '' }}>Adjustment</option>
+                            <option value="Production" {{ request('type') == 'Production' ? 'selected' : '' }}>Production</option>
+                            <option value="Wastage" {{ request('type') == 'Wastage' ? 'selected' : '' }}>Wastage</option>
+                            <option value="Stock Audit" {{ request('type') == 'Stock Audit' ? 'selected' : '' }}>Stock Audit</option>
+                            <option value="Sale" {{ request('type') == 'Sale' ? 'selected' : '' }}>Sale</option>
+                            <option value="Purchase" {{ request('type') == 'Purchase' ? 'selected' : '' }}>Purchase</option>
+                            <option value="Stock Toggled" {{ request('type') == 'Stock Toggled' ? 'selected' : '' }}>Stock Toggled</option>
+                            <option value="Product Deleted" {{ request('type') == 'Product Deleted' ? 'selected' : '' }}>Product Deleted</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin:0;flex:1;min-width:130px;">
+                        <label class="form-label" style="font-size:13px;font-weight:600;margin-bottom:6px;display:block;">From Date</label>
+                        <input type="text" name="start_date" value="{{ request('start_date') }}" class="form-control flatpickr-date" placeholder="Select Date" style="height:44px;border-radius:10px;width:100%;background-color:#fff;">
+                    </div>
+                    <div class="form-group" style="margin:0;flex:1;min-width:130px;">
+                        <label class="form-label" style="font-size:13px;font-weight:600;margin-bottom:6px;display:block;">To Date</label>
+                        <input type="text" name="end_date" value="{{ request('end_date') }}" class="form-control flatpickr-date" placeholder="Select Date" style="height:44px;border-radius:10px;width:100%;background-color:#fff;">
+                    </div>
+                    <div style="display:flex;gap:10px;">
+                        <button type="submit" class="btn btn-primary" style="height:44px;border-radius:10px;padding:0 20px;"><i class="bi bi-funnel"></i> Filter</button>
+                        <a href="{{ route('dashboard.stock-ledger') }}" class="btn btn-outline" style="height:44px;border-radius:10px;padding:0 20px;display:inline-flex;align-items:center;">Clear</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- Ledger Table -->
         <div class="card">
             <div class="card-body" style="padding:0;overflow-x:auto;">
@@ -163,6 +210,11 @@
                     </tbody>
                 </table>
             </div>
+            @if($ledger->hasPages())
+                <div style="padding:16px 20px;border-top:1px solid #e2e8f0;background:#fff;border-bottom-left-radius:8px;border-bottom-right-radius:8px;">
+                    {{ $ledger->links() }}
+                </div>
+            @endif
         </div>
 
         <!-- Stock Adjustment Modal -->
@@ -284,3 +336,16 @@
         </div>
     </div>
 </x-layouts.admin>
+<script>
+    $(document).ready(function() {
+        $('.select2-filter').select2({
+            placeholder: '-- All Products --',
+            allowClear: true
+        });
+
+        flatpickr('.flatpickr-date', {
+            dateFormat: "Y-m-d",
+            allowInput: true
+        });
+    });
+</script>

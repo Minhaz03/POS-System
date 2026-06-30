@@ -86,4 +86,18 @@ class CustomOrderController extends Controller
 
         return redirect()->route('dashboard.custom-orders')->with('success', 'Custom order cancelled.');
     }
+
+    /**
+     * Update Custom Order Status.
+     */
+    public function updateStatus(Request $request, \App\Models\CustomOrder $order)
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:Pending,Confirmed,In Progress,Completed,Cancelled'
+        ]);
+
+        $order->update(['status' => $validated['status']]);
+
+        return redirect()->route('dashboard.custom-orders')->with('success', 'Order status updated successfully.');
+    }
 }

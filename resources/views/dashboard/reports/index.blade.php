@@ -9,7 +9,7 @@
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;">
         
         <!-- Sales Report Card -->
-        <a href="{{ route('reports.sales') }}" style="text-decoration:none;">
+        <a href="{{ route('dashboard.reports.sales') }}" style="text-decoration:none;">
             <div class="card" style="transition: transform 0.2s, box-shadow 0.2s;">
                 <div class="card-body" style="display:flex;align-items:center;gap:16px;">
                     <div style="width:56px;height:56px;border-radius:12px;background:rgba(99,102,241,0.1);display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:24px;">
@@ -24,7 +24,7 @@
         </a>
 
         <!-- Purchases Report Card -->
-        <a href="{{ route('reports.purchases') }}" style="text-decoration:none;">
+        <a href="{{ route('dashboard.reports.purchases') }}" style="text-decoration:none;">
             <div class="card" style="transition: transform 0.2s, box-shadow 0.2s;">
                 <div class="card-body" style="display:flex;align-items:center;gap:16px;">
                     <div style="width:56px;height:56px;border-radius:12px;background:rgba(245,158,11,0.1);display:flex;align-items:center;justify-content:center;color:var(--warning);font-size:24px;">
@@ -39,7 +39,7 @@
         </a>
 
         <!-- Stock Report Card -->
-        <a href="{{ route('reports.stock') }}" style="text-decoration:none;">
+        <a href="{{ route('dashboard.reports.stock') }}" style="text-decoration:none;">
             <div class="card" style="transition: transform 0.2s, box-shadow 0.2s;">
                 <div class="card-body" style="display:flex;align-items:center;gap:16px;">
                     <div style="width:56px;height:56px;border-radius:12px;background:rgba(16,185,129,0.1);display:flex;align-items:center;justify-content:center;color:var(--success);font-size:24px;">
@@ -54,7 +54,7 @@
         </a>
 
         <!-- Production Report Card -->
-        <a href="{{ route('reports.production') }}" style="text-decoration:none;">
+        <a href="{{ route('dashboard.reports.production') }}" style="text-decoration:none;">
             <div class="card" style="transition: transform 0.2s, box-shadow 0.2s;">
                 <div class="card-body" style="display:flex;align-items:center;gap:16px;">
                     <div style="width:56px;height:56px;border-radius:12px;background:rgba(239,68,68,0.1);display:flex;align-items:center;justify-content:center;color:var(--danger);font-size:24px;">
@@ -69,7 +69,7 @@
         </a>
 
         <!-- Profit/Loss Report Card -->
-        <a href="{{ route('reports.profit-loss') }}" style="text-decoration:none;">
+        <a href="{{ route('dashboard.reports.profit-loss') }}" style="text-decoration:none;">
             <div class="card" style="transition: transform 0.2s, box-shadow 0.2s;">
                 <div class="card-body" style="display:flex;align-items:center;gap:16px;">
                     <div style="width:56px;height:56px;border-radius:12px;background:rgba(139,92,246,0.1);display:flex;align-items:center;justify-content:center;color:#8b5cf6;font-size:24px;">

@@ -291,7 +291,7 @@
 
             <div class="nav-section-label">Reports</div>
             <div class="nav-item">
-                <a href="{{ route('reports.index') }}" class="nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}"><i class="bi bi-file-earmark-text nav-icon"></i> All Reports</a>
+                <a href="{{ route('dashboard.reports.index') }}" class="nav-link {{ request()->routeIs('dashboard.reports.*') ? 'active' : '' }}"><i class="bi bi-file-earmark-text nav-icon"></i> All Reports</a>
             </div>
             <div class="nav-item">
                 <a href="{{ route('dashboard.analytics') }}" class="nav-link {{ request()->routeIs('dashboard.analytics') ? 'active' : '' }}"><i class="bi bi-bar-chart-line nav-icon"></i> Analytics</a>

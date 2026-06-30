@@ -1,6 +1,6 @@
 <x-layouts.admin title="Baking Production">
 
-    <div x-data="{ showModal: false, completeModal: false, activeBatchId: '', activeBatchCode: '' }" style="display:flex;justify-content:between;align-items:center;margin-bottom:24px;">
+    <div x-data="{ showModal: false }" style="display:flex;justify-content:between;align-items:center;margin-bottom:24px;">
         <div>
             <h2 style="font-size:22px;font-weight:800;color:#0f172a;margin:0;">Production Batches</h2>
             <p style="font-size:13.5px;color:#64748b;margin:4px 0 0 0;">Monitor active baking kitchen batches, quantities, scheduled timers, and statuses.</p>
@@ -47,53 +47,6 @@
             </div>
         </div>
 
-        <!-- Complete Batch Modal -->
-        <div x-show="completeModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9999;">
-            <div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;padding:20px;">
-                <div class="card" @click.outside="completeModal = false" style="width:100%;max-width:500px;box-shadow:0 10px 25px rgba(0,0,0,0.2);">
-                    <div class="card-header" style="justify-content:space-between;padding:16px 20px;">
-                        <span style="font-weight:700;font-size:16px;">Complete Batch: <span x-text="activeBatchCode" style="font-family:monospace;color:var(--primary);"></span></span>
-                        <button @click="completeModal = false" style="background:none;border:none;cursor:pointer;font-size:20px;color:#94a3b8;"><i class="bi bi-x"></i></button>
-                    </div>
-                    <form :action="'{{ route('dashboard.production.complete', '') }}/' + activeBatchId" method="POST">
-                        @csrf
-                        @method('PATCH')
-                        <div class="card-body" style="padding:20px;">
-                            <div class="alert alert-info" style="font-size:13px;padding:12px;margin-bottom:16px;">
-                                Completing this batch will deduct raw materials and add finished products to inventory.
-                            </div>
-                            
-                            <div class="form-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
-                                <div class="form-group" style="margin-bottom:0;">
-                                    <label class="form-label">Manufacturing Date</label>
-                                    <input type="date" name="manufacturing_date" class="form-control" value="{{ now()->format('Y-m-d') }}">
-                                </div>
-                                <div class="form-group" style="margin-bottom:0;">
-                                    <label class="form-label">Expiry Date</label>
-                                    <input type="date" name="expiry_date" class="form-control">
-                                </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Wasted Quantity (if any)</label>
-                                <input type="number" step="0.01" name="wastage_qty" class="form-control" placeholder="0.00">
-                                <small style="color:#64748b;font-size:12px;">Items that failed QA or burnt.</small>
-                            </div>
-                            
-                            <div class="form-group" style="margin-bottom:0;">
-                                <label class="form-label">Wastage Notes</label>
-                                <input type="text" name="wastage_notes" class="form-control" placeholder="Reason for wastage...">
-                            </div>
-                        </div>
-                        <div style="padding:16px 20px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:10px;">
-                            <button type="button" class="btn btn-outline" @click="completeModal = false">Cancel</button>
-                            <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle"></i> Complete Batch</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
     </div>
 
     <!-- Production Table -->
@@ -132,7 +85,11 @@
                         <td style="padding:14px 20px;color:#64748b;"><i class="bi bi-clock"></i> {{ $batch['date'] }}</td>
                         <td style="padding:14px 20px;text-align:center;font-size:16px;">
                             @if($batch['status'] !== 'Completed' && $batch['status'] !== 'Cancelled')
-                                <button type="button" @click="activeBatchId = '{{ $batch['real_id'] }}'; activeBatchCode = '{{ $batch['id'] }}'; completeModal = true;" style="background:none;border:none;color:#10b981;margin-right:12px;cursor:pointer;" title="Mark Completed"><i class="bi bi-check-lg"></i></button>
+                                <form id="form-complete-{{ $batch['real_id'] }}" action="{{ route('dashboard.production.complete', $batch['real_id']) }}" method="POST" style="display:inline;">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="button" onclick="confirmComplete({{ $batch['real_id'] }}, '{{ $batch['id'] }}')" style="background:none;border:none;color:#10b981;margin-right:12px;cursor:pointer;" title="Mark Completed"><i class="bi bi-check-lg"></i></button>
+                                </form>
                             @endif
                             @if($batch['status'] !== 'Completed' && $batch['status'] !== 'Cancelled')
                                 <form id="form-cancel-{{ $batch['real_id'] }}" action="{{ route('dashboard.production.cancel', $batch['real_id']) }}" method="POST" style="display:inline;">
@@ -150,6 +107,71 @@
     </div>
 
     <script>
+        function confirmComplete(realId, batchId) {
+            Swal.fire({
+                title: 'Complete Batch',
+                html: `
+                    <div style="text-align:left;font-size:14px;color:#475569;">
+                        <p style="margin-bottom:16px;background:#eff6ff;padding:10px;border-radius:6px;color:#1d4ed8;">Completing this batch will deduct raw materials and add finished products to inventory.</p>
+                        
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                            <div>
+                                <label style="display:block;font-weight:600;margin-bottom:4px;">Manufacturing Date</label>
+                                <input type="date" id="swal-mfg" class="form-control" value="{{ now()->format('Y-m-d') }}" style="width:100%;height:38px;">
+                            </div>
+                            <div>
+                                <label style="display:block;font-weight:600;margin-bottom:4px;">Expiry Date</label>
+                                <input type="date" id="swal-exp" class="form-control" style="width:100%;height:38px;">
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom:12px;">
+                            <label style="display:block;font-weight:600;margin-bottom:4px;">Wasted Qty (if any)</label>
+                            <input type="number" step="0.01" id="swal-wastage" class="form-control" placeholder="0.00" style="width:100%;height:38px;">
+                        </div>
+                        
+                        <div>
+                            <label style="display:block;font-weight:600;margin-bottom:4px;">Wastage Notes</label>
+                            <input type="text" id="swal-notes" class="form-control" placeholder="Reason for wastage..." style="width:100%;height:38px;">
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: '<i class="bi bi-check2-circle"></i> Complete',
+                preConfirm: () => {
+                    return {
+                        mfg: document.getElementById('swal-mfg').value,
+                        exp: document.getElementById('swal-exp').value,
+                        wastage: document.getElementById('swal-wastage').value,
+                        notes: document.getElementById('swal-notes').value
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    let form = document.getElementById('form-complete-' + realId);
+                    
+                    const addHiddenInput = (name, value) => {
+                        if (value) {
+                            let input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = name;
+                            input.value = value;
+                            form.appendChild(input);
+                        }
+                    };
+                    
+                    addHiddenInput('manufacturing_date', result.value.mfg);
+                    addHiddenInput('expiry_date', result.value.exp);
+                    addHiddenInput('wastage_qty', result.value.wastage);
+                    addHiddenInput('wastage_notes', result.value.notes);
+                    
+                    form.submit();
+                }
+            });
+        }
+
         function confirmAction(action, realId, batchId) {
             const title = 'Cancel Batch?';
             const text = `Batch <strong style="font-family:monospace;">${batchId}</strong> will be cancelled.`;
