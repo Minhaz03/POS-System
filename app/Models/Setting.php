@@ -14,15 +14,26 @@ class Setting extends Model
      */
     public static function get(string $key, mixed $default = null): mixed
     {
-        $setting = Cache::rememberForever("setting.{$key}", function () use ($key) {
-            return self::where('key', $key)->first();
+        $cached = Cache::rememberForever("sys_setting.{$key}", function () use ($key) {
+            $setting = self::where('key', $key)->first();
+            if (!$setting) {
+                return null;
+            }
+            // Store only plain primitives — never a Model object
+            return ['value' => $setting->value, 'type' => $setting->type];
         });
 
-        if (!$setting) {
-            return $default;
+        // Guard: if the cache returned a corrupted/incomplete object, fetch fresh from DB
+        if (!$cached || !is_array($cached)) {
+            Cache::forget("sys_setting.{$key}");
+            $setting = self::where('key', $key)->first();
+            if (!$setting) {
+                return $default;
+            }
+            return self::castValue($setting->value, $setting->type);
         }
 
-        return self::castValue($setting->value, $setting->type);
+        return self::castValue($cached['value'], $cached['type']);
     }
 
     /**
@@ -42,7 +53,7 @@ class Setting extends Model
             ]
         );
 
-        Cache::forget("setting.{$key}");
+        Cache::forget("sys_setting.{$key}");
         Cache::forget("all_settings");
 
         return $setting;

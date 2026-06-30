@@ -41,4 +41,9 @@ class ProductionBatch extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    public function consumptions()
+    {
+        return $this->hasMany(ProductionConsumption::class);
+    }
 }

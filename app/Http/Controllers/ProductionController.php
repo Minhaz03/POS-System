@@ -30,6 +30,15 @@ class ProductionController extends Controller
     }
 
     /**
+     * Show Production Batch details.
+     */
+    public function show(\App\Models\ProductionBatch $batch): View
+    {
+        $batch->load(['recipe.product', 'consumptions.product']);
+        return view('dashboard.production-show', compact('batch'));
+    }
+
+    /**
      * Store a new Production Batch.
      */
     public function store(Request $request)

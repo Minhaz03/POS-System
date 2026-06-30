@@ -1,8 +1,6 @@
 <x-layouts.admin title="Custom Bakery Orders">
 
-    <div x-data="{ showModal: false, showDetailsModal: false, selectedOrder: null, viewOrder(order) { this.selectedOrder = order; this.showDetailsModal = true; } }">
-
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+    <div x-data="{ showModal: false }" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
         <div>
             <h2 style="font-size:22px;font-weight:800;color:#0f172a;margin:0;">Custom Orders</h2>
             <p style="font-size:13.5px;color:#64748b;margin:4px 0 0 0;">Manage custom cake requests, delivery dates, client specifications, and down payments.</p>
@@ -68,7 +66,6 @@
                 </div>
             </div>
         </div>
-        </div>
     </div>
 
     <!-- Custom Orders Table -->
@@ -102,13 +99,17 @@
                                 <span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;display:inline-block;">Confirmed</span>
                             @elseif($order['status'] === 'In Progress')
                                 <span style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;display:inline-block;">In Progress</span>
+                            @elseif($order['status'] === 'Completed')
+                                <span style="background:#f3e8ff;color:#7e22ce;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;display:inline-block;">Completed</span>
+                            @elseif($order['status'] === 'Cancelled')
+                                <span style="background:#fee2e2;color:#b91c1c;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;display:inline-block;">Cancelled</span>
                             @else
-                                <span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;display:inline-block;">Pending</span>
+                                <span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;display:inline-block;">{{ $order['status'] }}</span>
                             @endif
                         </td>
                         <td style="padding:14px 20px;font-weight:600;color:#4f46e5;"><i class="bi bi-calendar-event"></i> {{ $order['delivery_date'] }}</td>
                         <td style="padding:14px 20px;text-align:center;font-size:16px;">
-                            <button type="button" @click="viewOrder({{ json_encode($order) }})" style="background:none;border:none;color:#10b981;cursor:pointer;margin-right:12px;padding:0;" title="View Details"><i class="bi bi-eye"></i></button>
+                            <a href="{{ route('dashboard.custom-orders.show', $order['real_id']) }}" style="color:#10b981;margin-right:12px;" title="View Details"><i class="bi bi-eye"></i></a>
                             <a href="{{ route('dashboard.custom-orders.print', $order['real_id']) }}" target="_blank" style="color:#6366f1;margin-right:12px;" title="Print Slip"><i class="bi bi-printer"></i></a>
                             
                             @if($order['status'] !== 'Cancelled')
@@ -144,67 +145,4 @@
         }
     </script>
 
-    </div>
-
-        <!-- View/Update Order Modal -->
-        <div x-show="showDetailsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9999;" x-cloak>
-            <div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;padding:20px;">
-                <div class="card" @click.outside="showDetailsModal = false" style="width:100%;max-width:600px;box-shadow:0 10px 25px rgba(0,0,0,0.2);max-height:90vh;display:flex;flex-direction:column;">
-                    <div class="card-header" style="justify-content:space-between;padding:16px 20px;flex-shrink:0;">
-                        <span style="font-weight:700;font-size:16px;display:flex;align-items:center;">
-                            <i class="bi bi-file-earmark-text" style="color:var(--primary);margin-right:8px;"></i> Order Details
-                            <span x-text="selectedOrder?.id" style="font-family:monospace;color:#64748b;margin-left:8px;font-size:14px;background:#f1f5f9;padding:2px 8px;border-radius:6px;"></span>
-                        </span>
-                        <button @click="showDetailsModal = false" style="background:none;border:none;cursor:pointer;font-size:20px;color:#94a3b8;"><i class="bi bi-x"></i></button>
-                    </div>
-                    
-                    <div class="card-body" style="padding:24px;overflow-y:auto;" x-show="selectedOrder">
-                        <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:24px;">
-                            <tr style="border-bottom:1px solid #f1f5f9;">
-                                <td style="padding:12px 0;color:#64748b;font-weight:500;width:140px;">Customer Name</td>
-                                <td style="padding:12px 0;font-weight:700;color:#0f172a;" x-text="selectedOrder?.customer"></td>
-                            </tr>
-                            <tr style="border-bottom:1px solid #f1f5f9;">
-                                <td style="padding:12px 0;color:#64748b;font-weight:500;">Delivery Date</td>
-                                <td style="padding:12px 0;font-weight:600;color:#4f46e5;"><i class="bi bi-calendar-event"></i> <span x-text="selectedOrder?.delivery_date"></span></td>
-                            </tr>
-                            <tr style="border-bottom:1px solid #f1f5f9;">
-                                <td style="padding:12px 0;color:#64748b;font-weight:500;vertical-align:top;">Specifications</td>
-                                <td style="padding:12px 0;color:#334155;line-height:1.5;white-space:pre-wrap;" x-text="selectedOrder?.details"></td>
-                            </tr>
-                            <tr style="border-bottom:1px solid #f1f5f9;">
-                                <td style="padding:12px 0;color:#64748b;font-weight:500;">Total Cost</td>
-                                <td style="padding:12px 0;font-weight:700;color:#0f172a;" x-text="'৳ ' + Number(selectedOrder?.price || 0).toLocaleString(undefined, {minimumFractionDigits: 2})"></td>
-                            </tr>
-                            <tr style="border-bottom:1px solid #f1f5f9;">
-                                <td style="padding:12px 0;color:#64748b;font-weight:500;">Advance Paid</td>
-                                <td style="padding:12px 0;font-weight:700;color:#16a34a;" x-text="'৳ ' + Number(selectedOrder?.advance || 0).toLocaleString(undefined, {minimumFractionDigits: 2})"></td>
-                            </tr>
-                            <tr>
-                                <td style="padding:12px 0;color:#64748b;font-weight:500;">Due Amount</td>
-                                <td style="padding:12px 0;font-weight:800;color:#dc2626;font-size:16px;" x-text="'৳ ' + (Number(selectedOrder?.price || 0) - Number(selectedOrder?.advance || 0)).toLocaleString(undefined, {minimumFractionDigits: 2})"></td>
-                            </tr>
-                        </table>
-
-                        <form :action="`/Custom-Orders/${selectedOrder?.real_id}/status`" method="POST" style="margin:0;background:#f8fafc;padding:16px;border-radius:12px;border:1px solid #e2e8f0;">
-                            @csrf
-                            @method('PATCH')
-                            <h5 style="margin:0 0 12px 0;font-size:14px;color:#0f172a;font-weight:600;"><i class="bi bi-pencil-square" style="color:var(--primary);margin-right:4px;"></i> Update Order Status</h5>
-                            <div style="display:flex;gap:12px;">
-                                <select name="status" class="form-control" style="flex:1;height:42px;border-radius:8px;" x-model="selectedOrder.status">
-                                    <option value="Pending">Pending</option>
-                                    <option value="Confirmed">Confirmed</option>
-                                    <option value="In Progress">In Progress</option>
-                                    <option value="Completed">Completed</option>
-                                    <option value="Cancelled">Cancelled</option>
-                                </select>
-                                <button type="submit" class="btn btn-primary" style="height:42px;border-radius:8px;padding:0 24px;">Update Status</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
 </x-layouts.admin>

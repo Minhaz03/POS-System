@@ -65,6 +65,14 @@ class CustomOrderController extends Controller
     }
 
     /**
+     * Show Custom Order details.
+     */
+    public function show(\App\Models\CustomOrder $order): View
+    {
+        return view('dashboard.custom-orders-show', compact('order'));
+    }
+
+    /**
      * Print Custom Order Slip.
      */
     public function print(\App\Models\CustomOrder $order): View
@@ -96,8 +104,31 @@ class CustomOrderController extends Controller
             'status' => 'required|in:Pending,Confirmed,In Progress,Completed,Cancelled'
         ]);
 
+        if ($validated['status'] === 'Completed' && $order->total_price > $order->advance_payment) {
+            return redirect()->back()->withErrors(['status' => 'Cannot mark order as Completed until the full payment is collected.']);
+        }
+
         $order->update(['status' => $validated['status']]);
 
-        return redirect()->route('dashboard.custom-orders')->with('success', 'Order status updated successfully.');
+        return redirect()->back()->with('success', 'Order status updated successfully.');
+    }
+
+    /**
+     * Add payment to Custom Order.
+     */
+    public function addPayment(Request $request, \App\Models\CustomOrder $order)
+    {
+        $validated = $request->validate([
+            'payment_amount' => 'required|numeric|min:0.01'
+        ]);
+
+        $newAdvance = $order->advance_payment + $validated['payment_amount'];
+        if ($newAdvance > $order->total_price) {
+            return redirect()->back()->withErrors(['payment_amount' => 'Total payment cannot exceed the total cost of the order.']);
+        }
+
+        $order->update(['advance_payment' => $newAdvance]);
+
+        return redirect()->back()->with('success', 'Payment added successfully.');
     }
 }

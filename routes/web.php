@@ -147,14 +147,17 @@ Route::middleware(['auth', 'verified'])->prefix('dashboard')->name('dashboard.')
         'destroy' => 'recipes.destroy',
     ]);
     Route::get('/Production', [ProductionController::class, 'production'])->name('production');
+    Route::get('/Production/{batch}', [ProductionController::class, 'show'])->name('production.show');
     Route::post('/Production', [ProductionController::class, 'store'])->name('production.store');
     Route::patch('/Production/{batch}/complete', [ProductionController::class, 'complete'])->name('production.complete');
     Route::patch('/Production/{batch}/cancel', [ProductionController::class, 'cancel'])->name('production.cancel');
     Route::get('/Custom-Orders', [CustomOrderController::class, 'customOrders'])->name('custom-orders');
     Route::post('/Custom-Orders', [CustomOrderController::class, 'store'])->name('custom-orders.store');
+    Route::get('/Custom-Orders/{order}', [CustomOrderController::class, 'show'])->name('custom-orders.show');
     Route::get('/Custom-Orders/{order}/print', [CustomOrderController::class, 'print'])->name('custom-orders.print');
     Route::patch('/Custom-Orders/{order}/cancel', [CustomOrderController::class, 'cancel'])->name('custom-orders.cancel');
     Route::patch('/Custom-Orders/{order}/status', [CustomOrderController::class, 'updateStatus'])->name('custom-orders.status');
+    Route::post('/Custom-Orders/{order}/payment', [CustomOrderController::class, 'addPayment'])->name('custom-orders.payment');
     Route::get('/Analytics', [AnalyticsController::class, 'analytics'])->name('analytics');
     
     // Reports

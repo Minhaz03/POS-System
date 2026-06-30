@@ -84,6 +84,7 @@
                         </td>
                         <td style="padding:14px 20px;color:#64748b;"><i class="bi bi-clock"></i> {{ $batch['date'] }}</td>
                         <td style="padding:14px 20px;text-align:center;font-size:16px;">
+                            <a href="{{ route('dashboard.production.show', $batch['real_id']) }}" style="color:#6366f1;margin-right:12px;" title="View Details"><i class="bi bi-eye"></i></a>
                             @if($batch['status'] !== 'Completed' && $batch['status'] !== 'Cancelled')
                                 <form id="form-complete-{{ $batch['real_id'] }}" action="{{ route('dashboard.production.complete', $batch['real_id']) }}" method="POST" style="display:inline;">
                                     @csrf
