@@ -230,9 +230,34 @@
         .btn-outline { background: transparent; border: 1.5px solid #d1d5db; color: #374151; }
         .btn-outline:hover { background: #f9fafb; }
         .btn-sm { padding: 6px 12px; font-size: 12.5px; }
+
+        /* ── Responsive ── */
+        .btn-sidebar-toggle {
+            display: none;
+            background: none; border: none; font-size: 24px; cursor: pointer;
+            color: #0f172a; padding: 0; margin-right: 12px; line-height: 1;
+        }
+        .sidebar-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.5); z-index: 90;
+            opacity: 0; visibility: hidden; transition: all 0.3s ease;
+            backdrop-filter: blur(2px);
+        }
+        .sidebar { transition: transform 0.3s ease; }
+        .main-wrapper { transition: margin-left 0.3s ease; }
+        @media (max-width: 991.98px) {
+            .btn-sidebar-toggle { display: block; }
+            .sidebar { transform: translateX(-100%); box-shadow: 4px 0 24px rgba(0,0,0,0.1); }
+            .sidebar.show { transform: translateX(0); }
+            .main-wrapper { margin-left: 0; }
+            .sidebar-overlay.show { opacity: 1; visibility: visible; }
+        }
     </style>
 </head>
 <body>
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
@@ -341,6 +366,9 @@
     <!-- Main Wrapper -->
     <div class="main-wrapper">
         <header class="topbar">
+            <button class="btn-sidebar-toggle" id="sidebarToggle">
+                <i class="bi bi-list"></i>
+            </button>
             <div class="topbar-title">{{ $title ?? 'Dashboard' }}</div>
             <div class="topbar-actions">
                 <a href="#" class="btn-topbar"><i class="bi bi-bell"></i></a>
@@ -367,6 +395,23 @@
     </div>
 
     <script>
+        // Sidebar Toggle
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('show');
+            sidebarOverlay.classList.toggle('show');
+        }
+
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', toggleSidebar);
+        }
+        if (sidebarOverlay) {
+            sidebarOverlay.addEventListener('click', toggleSidebar);
+        }
+
         // Auto-dismiss toasts
         document.querySelectorAll('.toast-msg').forEach(t => {
             setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(20px)'; t.style.transition='0.4s'; setTimeout(() => t.remove(), 400); }, 4000);
