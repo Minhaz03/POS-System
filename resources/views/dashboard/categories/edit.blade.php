@@ -144,6 +144,7 @@
             acceptedFileTypes: ['image/*'],
             allowMultiple: false,
             name: 'image',
+            storeAsFile: true,
         });
     </script>
 

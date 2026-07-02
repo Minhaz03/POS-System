@@ -201,18 +201,22 @@
             FilePondPluginFileValidateType,
             FilePondPluginImageExifOrientation
         );
-        FilePond.create(document.querySelector('.filepond-image'), {
-            labelIdle: `<span style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px 0;text-align:center;width:100%;">
-                            <i class="bi bi-cloud-arrow-up" style="font-size:28px;color:#94a3b8;display:block;"></i>
-                            <span style="font-weight:700;color:#475569;font-size:13.5px;display:block;">Drop Logo Here</span>
-                            <span style="font-size:12px;color:#94a3b8;display:block;">Or <span class="filepond--label-action" style="font-weight:600;">Browse Files</span></span>
-                        </span>`,
-            imagePreviewHeight: 160,
-            stylePanelAspectRatio: '1:1',
-            acceptedFileTypes: ['image/*'],
-            allowMultiple: false,
-            name: 'logo',
-        });
+        const filePondElem = document.querySelector('.filepond-image');
+        if (filePondElem) {
+            FilePond.create(filePondElem, {
+                labelIdle: `<span style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px 0;text-align:center;width:100%;">
+                                <i class="bi bi-cloud-arrow-up" style="font-size:28px;color:#94a3b8;display:block;"></i>
+                                <span style="font-weight:700;color:#475569;font-size:13.5px;display:block;">Drop Logo Here</span>
+                                <span style="font-size:12px;color:#94a3b8;display:block;">Or <span class="filepond--label-action" style="font-weight:600;">Browse Files</span></span>
+                            </span>`,
+                imagePreviewHeight: 160,
+                stylePanelAspectRatio: '1:1',
+                acceptedFileTypes: ['image/*'],
+                allowMultiple: false,
+                name: 'logo',
+                storeAsFile: true,
+            });
+        }
     </script>
 
 </x-layouts.admin>

@@ -73,8 +73,24 @@
                             @endif
                         </td>
                         <td style="padding:14px 20px;text-align:right;">৳ {{ number_format($supplier->opening_balance, 2) }}</td>
-                        <td style="padding:14px 20px;text-align:right;font-weight:700;color:{{ $supplier->current_balance > 0 ? '#ef4444' : ($supplier->current_balance < 0 ? '#10b981' : '#0f172a') }}">
-                            ৳ {{ number_format($supplier->current_balance, 2) }}
+                        @php
+                            $balance = $supplier->current_balance;
+                            if (is_null($balance)) {
+                                $balanceColor = '#eab308'; // Yellow
+                                $balanceText = 'N/A';
+                            } elseif ($balance < 0) {
+                                $balanceColor = '#ef4444'; // Red
+                                $balanceText = '৳ ' . number_format($balance, 2);
+                            } elseif ($balance > 0) {
+                                $balanceColor = '#10b981'; // Green
+                                $balanceText = '৳ ' . number_format($balance, 2);
+                            } else {
+                                $balanceColor = '#0f172a'; // Default slate/black for 0
+                                $balanceText = '৳ ' . number_format($balance, 2);
+                            }
+                        @endphp
+                        <td style="padding:14px 20px;text-align:right;font-weight:700;color:{{ $balanceColor }}">
+                            {{ $balanceText }}
                         </td>
                         <td style="padding:14px 20px;text-align:center;">
                             <span style="background:{{ $supplier->is_active ? '#dcfce7' : '#f1f5f9' }};color:{{ $supplier->is_active ? '#15803d' : '#475569' }};padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;">
