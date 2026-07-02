@@ -93,7 +93,7 @@
         .nav-link.active { background: var(--sidebar-active-bg); color: #a5b4fc; }
         .nav-link .nav-icon { font-size: 16px; width: 20px; text-align: center; }
         .sidebar-footer {
-            padding: 16px; border-top: 1px solid rgba(255,255,255,0.06);
+            padding: 12px 16px 16px; border-top: 1px solid rgba(255,255,255,0.06);
         }
         .sidebar-user {
             display: flex; align-items: center; gap: 10px;
@@ -106,10 +106,54 @@
             background: var(--primary);
             display: flex; align-items: center; justify-content: center;
             font-size: 14px; font-weight: 700; color: #fff;
+            flex-shrink: 0;
         }
         .sidebar-user-info { flex: 1; min-width: 0; }
         .sidebar-user-name { font-size: 13px; font-weight: 600; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .sidebar-user-role { font-size: 11px; color: var(--sidebar-text); }
+        .sidebar-footer-actions {
+            display: flex; gap: 6px; margin-top: 8px;
+        }
+        .sidebar-action-btn {
+            flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+            padding: 7px 10px; border-radius: 7px; font-size: 12px; font-weight: 600;
+            text-decoration: none; border: none; cursor: pointer; transition: all 0.15s;
+        }
+        .sidebar-action-btn.settings {
+            background: rgba(255,255,255,0.07); color: #94a3b8;
+        }
+        .sidebar-action-btn.settings:hover { background: rgba(255,255,255,0.12); color: #e2e8f0; }
+        .sidebar-action-btn.logout {
+            background: rgba(239,68,68,0.12); color: #f87171;
+        }
+        .sidebar-action-btn.logout:hover { background: rgba(239,68,68,0.22); color: #fca5a5; }
+        /* Topbar profile dropdown */
+        .profile-dropdown-wrap { position: relative; }
+        .profile-dropdown-menu {
+            display: none; position: absolute; right: 0; top: calc(100% + 8px);
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(15,23,42,0.12); min-width: 200px;
+            z-index: 999; overflow: hidden;
+            animation: dropFadeIn 0.18s ease;
+        }
+        .profile-dropdown-menu.open { display: block; }
+        @keyframes dropFadeIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+        .profile-dropdown-header {
+            padding: 14px 16px 10px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .profile-dropdown-name { font-size: 13px; font-weight: 700; color: #0f172a; }
+        .profile-dropdown-email { font-size: 11.5px; color: #64748b; margin-top: 2px; }
+        .profile-dropdown-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 16px; font-size: 13px; font-weight: 500;
+            color: #374151; text-decoration: none; transition: background 0.12s;
+            cursor: pointer; border: none; background: none; width: 100%; text-align: left;
+        }
+        .profile-dropdown-item:hover { background: #f8fafc; color: #0f172a; }
+        .profile-dropdown-item.danger { color: #ef4444; }
+        .profile-dropdown-item.danger:hover { background: #fef2f2; color: #dc2626; }
+        .profile-dropdown-divider { height: 1px; background: #f1f5f9; margin: 4px 0; }
 
         /* ── Main Content ── */
         .main-wrapper { margin-left: var(--sidebar-width); min-height: 100vh; display: flex; flex-direction: column; }
@@ -353,10 +397,15 @@
                     <div class="sidebar-user-name">{{ Auth::user()->name }}</div>
                     <div class="sidebar-user-role">{{ Auth::user()->roles->first()?->name ?? 'User' }}</div>
                 </div>
-                <form method="POST" action="{{ route('logout') }}" style="margin:0">
+            </div>
+            <div class="sidebar-footer-actions">
+                <a href="{{ route('admin.settings.index') }}" class="sidebar-action-btn settings" title="Settings">
+                    <i class="bi bi-gear-fill"></i> Settings
+                </a>
+                <form method="POST" action="{{ route('logout') }}" style="margin:0;flex:1;display:flex;">
                     @csrf
-                    <button type="submit" style="background:none;border:none;cursor:pointer;color:#64748b;font-size:16px;" title="Log Out">
-                        <i class="bi bi-box-arrow-right"></i>
+                    <button type="submit" class="sidebar-action-btn logout" title="Log Out" style="width:100%;">
+                        <i class="bi bi-box-arrow-right"></i> Logout
                     </button>
                 </form>
             </div>
@@ -372,7 +421,37 @@
             <div class="topbar-title">{{ $title ?? 'Dashboard' }}</div>
             <div class="topbar-actions">
                 <a href="#" class="btn-topbar"><i class="bi bi-bell"></i></a>
-                <a href="{{ route('admin.settings.index') }}" class="btn-topbar"><i class="bi bi-person-circle"></i> Profile</a>
+                <!-- Profile Dropdown -->
+                <div class="profile-dropdown-wrap" id="profileDropdownWrap">
+                    <button type="button" class="btn-topbar" id="profileDropdownBtn" onclick="toggleProfileDropdown()" style="gap:8px;">
+                        <span style="width:28px;height:28px;border-radius:50%;background:var(--primary);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;">
+                            {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                        </span>
+                        <span style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ Auth::user()->name }}</span>
+                        <i class="bi bi-chevron-down" style="font-size:10px;"></i>
+                    </button>
+                    <div class="profile-dropdown-menu" id="profileDropdownMenu">
+                        <div class="profile-dropdown-header">
+                            <div class="profile-dropdown-name">{{ Auth::user()->name }}</div>
+                            <div class="profile-dropdown-email">{{ Auth::user()->email }}</div>
+                        </div>
+                        <div style="padding: 4px 0;">
+                            <a href="{{ route('profile.edit') }}" class="profile-dropdown-item">
+                                <i class="bi bi-person-circle" style="color:#6366f1;font-size:15px;"></i> My Profile
+                            </a>
+                            <a href="{{ route('admin.settings.index') }}" class="profile-dropdown-item">
+                                <i class="bi bi-gear" style="color:#64748b;font-size:15px;"></i> Settings
+                            </a>
+                            <div class="profile-dropdown-divider"></div>
+                            <form method="POST" action="{{ route('logout') }}" style="margin:0;">
+                                @csrf
+                                <button type="submit" class="profile-dropdown-item danger">
+                                    <i class="bi bi-box-arrow-right" style="font-size:15px;"></i> Logout
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -411,6 +490,21 @@
         if (sidebarOverlay) {
             sidebarOverlay.addEventListener('click', toggleSidebar);
         }
+
+        // Profile Dropdown Toggle
+        function toggleProfileDropdown() {
+            const menu = document.getElementById('profileDropdownMenu');
+            menu.classList.toggle('open');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const wrap = document.getElementById('profileDropdownWrap');
+            if (wrap && !wrap.contains(e.target)) {
+                const menu = document.getElementById('profileDropdownMenu');
+                if (menu) menu.classList.remove('open');
+            }
+        });
 
         // Auto-dismiss toasts
         document.querySelectorAll('.toast-msg').forEach(t => {
